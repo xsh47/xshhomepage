@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <style>
+    .paper { fill:#f5f0e8; stroke:#2c2c2c; stroke-width:3.2; }
+    .ghost { fill:#f5f0e8; stroke:#2c2c2c; stroke-width:2.4; opacity:.4; }
+    .x     { fill:none; stroke:#e74c3c; stroke-width:7; stroke-linecap:round; }
+    @media (prefers-color-scheme:dark) {
+      .paper { fill:#1e1d1b; stroke:#ece7dc; }
+      .ghost { fill:#1e1d1b; stroke:#ece7dc; }
+      .x     { stroke:#ef6f5e; }
+    }
+  </style>
+  <g transform="rotate(-4 32 32)">
+    <!-- 错位的第二遍描边，模拟铅笔来回描两下 -->
+    <rect class="ghost" x="6.5" y="7.5" width="52" height="52" rx="13"/>
+    <rect class="paper" x="6" y="6" width="52" height="52" rx="12"/>
+    <!-- 手写小写 x：两笔略带弧度，在中心交叉 -->
+    <path class="x" d="M21.5 21.5 C26 27 36 41 42.5 42.5"/>
+    <path class="x" d="M42.5 21.5 C38 27 28 41 21.5 42.5"/>
+  </g>
+</svg>
