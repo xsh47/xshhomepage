@@ -543,7 +543,6 @@
     </div>
     <div class="links">
       <button class="btn solid" type="button" data-copy="xsh47@foxmail.com">✉ 邮件联系</button>
-      <button class="btn" type="button" data-copy="17723316421">☎ 17723316421</button>
     </div>
   </section>
 
@@ -653,7 +652,7 @@
     setTimeout(() => { copyBtn.textContent = '复制邮箱'; }, 1600);
   });
 
-  /* 联系方式：不用 tel: / mailto: 协议链接，点击改为复制 */
+  /* 联系方式：点击后直接复制到剪贴板 */
   document.querySelectorAll('[data-copy]').forEach(btn => {
     const label = btn.textContent;
     btn.addEventListener('click', async () => {
