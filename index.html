@@ -1,0 +1,2433 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f0e8">
+<meta name="description" content="谢诗琦，6年手游策划经验，专注系统设计、商业化活动与长期运营。">
+<title>谢诗琦 · 游戏策划</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script>document.documentElement.classList.add('js');</script>
+
+<!-- 两侧留白处的装饰小游戏：左边火柴人弹弓，右边球形小动物俄罗斯方块 -->
+<div class="bg-tetris" id="bg-tetris" aria-hidden="true">
+  <canvas id="bt-left"></canvas>
+  <canvas id="bt-right"></canvas>
+</div>
+<canvas class="bg-shot" id="bt-shot" aria-hidden="true"></canvas>
+
+<div class="game-hud" id="game-hud">
+  <div class="hud-row">
+    <span class="hud-lbl">SCORE</span>
+    <span class="hud-num" id="hud-score">0</span>
+  </div>
+  <div class="hud-row hud-row-ammo">
+    <span class="hud-lbl">BULLET</span>
+    <span class="hud-bullets" id="hud-bullets">1</span>
+    <span class="hud-decay" id="hud-decay"></span>
+  </div>
+  <div class="hud-row hud-row-hist">
+    <span class="hud-lbl">前5局</span>
+    <span class="hud-hist" id="hud-hist"><i>暂无</i></span>
+  </div>
+  <div class="hud-btns">
+    <button class="hud-btn" id="hud-pause" type="button" title="暂停 / 继续" aria-label="暂停或继续游戏">
+      <svg id="hud-pause-ico" viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M4 2.5v7M8 2.5v7"/>
+      </svg>
+    </button>
+    <button class="hud-btn" id="hud-reset" type="button" title="重置游戏" aria-label="重置游戏">
+      <svg viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2.2 4.4A4.2 4.2 0 1 1 2 6.9"/><path d="M2.4 1.9v2.7h2.7"/>
+      </svg>
+    </button>
+  </div>
+  <p class="hud-tip">点击两侧空白发射 · ← → 移动方块 · ↑ 旋转 · ↓ 快速下降 · 同级同色相撞合成 · 炸药球连爆 · 弹药球 +1 弹道（10 秒不打就 -1）</p>
+</div>
+
+<!-- 右侧留白底部的方块控制条：左移 / 旋转 / 右移 -->
+<div class="game-pad" id="game-pad">
+  <button class="pad-btn" id="pad-left" type="button" title="向左移动（←）" aria-label="方块向左移动">
+    <svg viewBox="0 0 14 14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 2.6 4.2 7 9 11.4"/>
+    </svg>
+  </button>
+  <button class="pad-btn wide" id="pad-rot" type="button" title="旋转方块（↑ / 空格）" aria-label="旋转方块">
+    <svg viewBox="0 0 14 14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11.4 6.2A4.8 4.8 0 1 0 11.6 9"/><path d="M12.6 2.6v3.8h-3.8"/>
+    </svg>
+  </button>
+  <div class="pad-sep"></div>
+  <button class="pad-btn" id="pad-right" type="button" title="向右移动（→）" aria-label="方块向右移动">
+    <svg viewBox="0 0 14 14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 2.6 9.8 7 5 11.4"/>
+    </svg>
+  </button>
+  <div class="pad-sep"></div>
+  <button class="pad-btn" id="pad-down" type="button" title="快速下降：直落到底（↓ / S）" aria-label="方块快速下降到底">
+    <svg viewBox="0 0 14 14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2.6 5 7 9.8 11.4 5"/><path d="M1.6 12.2h10.8"/>
+    </svg>
+  </button>
+</div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="logo" href="#top">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="M6.5 25.5 9 18l12-12 5 5-12 12-7.5 2.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="M9 18l5 5M19.5 8.5l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M5 29c4-1 5-2 6-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-dasharray="2 2"/>
+      </svg>
+      谢诗琦 <em>game designer</em>
+    </a>
+    <nav class="nav" aria-label="主导航">
+      <a href="#about">关于我</a>
+      <a href="#experience">经历</a>
+      <a href="#project">项目</a>
+      <a href="#portfolio">作品集</a>
+      <a href="#skills">能力</a>
+      <a href="#contact">联系</a>
+    </nav>
+    <button class="icon-btn" id="theme-toggle" type="button" aria-label="切换深色模式" title="切换深色模式">☾</button>
+  </div>
+</header>
+
+<main class="wrap" id="top">
+
+  <!-- ==================== 首屏 ==================== -->
+  <section class="hero">
+    <div class="hero-main">
+      <p class="eyebrow">Resume · 游戏策划</p>
+      <h1><span class="hi">Hi，我是</span><span class="name">谢诗琦</span></h1>
+      <p class="lede"><b>6 年手游策划经验</b>，长期负责卡牌项目的系统、活动、商业化和经济数值设计。擅于把复杂需求拆解成可执行的方案，并陪它走完开发、上线、验收和复盘的整段路。</p>
+      <div class="actions">
+        <a class="btn solid" href="#experience">
+          查看工作经历
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13M13 7l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a class="btn" href="#portfolio">个人作品集</a>
+        <button class="btn accent" type="button" id="open-contact">联系我</button>
+      </div>
+      <p class="hero-note">
+        <svg viewBox="0 0 34 20" fill="none" aria-hidden="true"><path d="M2 6c8-4 16 8 30 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-dasharray="3 3"/><path d="M26 5l6 7-8 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        向下翻，附作品集与配置表原文件
+      </p>
+    </div>
+
+    <aside class="facts rv" aria-label="基础信息">
+      <div class="facts-head">
+        <span class="t">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 20 20 4M14.5 4.5h5v5M4 19.5h5v-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="19" cy="5" r="1.4" fill="currentColor"/></svg>
+          基础信息
+        </span>
+        <span class="meta">basic info</span>
+      </div>
+      <ul class="facts-list">
+        <li><span class="k">所在地</span><span class="v">成都 · 中国</span></li>
+        <li><span class="k">方向</span><span class="v">游戏策划</span></li>
+        <li><span class="k">擅长</span><span class="v">系统与商业化方向</span></li>
+        <li><span class="k">品类</span><span class="v">卡牌手游</span></li>
+        <li><span class="k">市场</span><span class="v">国服 &amp; 海外</span></li>
+      </ul>
+      <div class="facts-foot">
+        <span>OPEN TO WORK</span>
+        <span class="meta">no.01</span>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ==================== 数据 ==================== -->
+  <section class="tally rv" aria-label="职业数据">
+    <div><strong class="tally-num">6 年</strong><span class="tally-cap">手游策划经验</span></div>
+    <div><strong class="tally-num">30+</strong><span class="tally-cap">推动上线的活动</span></div>
+    <div><strong class="tally-num">6 人</strong><span class="tally-cap">统筹协调团队</span></div>
+    <div><strong class="tally-num">82.5%</strong><span class="tally-cap">绩效 S 级及以上占比</span></div>
+  </section>
+
+  <!-- ==================== 关于 ==================== -->
+  <section class="sec" id="about">
+    <div class="sec-head rv">
+      <span class="sec-idx">(01)</span>
+      <h2>关于我<em>about</em></h2>
+    </div>
+    <div class="about-grid">
+      <div class="card prose rv" style="--d:60ms">
+        <span class="pin" aria-hidden="true"></span>
+        <p>我主要负责卡牌手游的 <b>系统、活动、商业化和经济数值</b>，熟悉从方案设计、配置表制作到开发跟进、上线验收和数据复盘的完整流程。</p>
+        <p>工作中会结合版本目标、运营数据、玩家反馈和市场变化，调整活动节奏、商业化内容和资源投放策略，并协同程序、美术、测试和客服团队推进交付。</p>
+        <p>项目负责人临时调整后，我接手项目统筹与团队管理工作，协调 6 名成员完成任务分配、版本排期、需求评审、进度跟进、问题协调和上线验收，同时继续完成本职策划工作。</p>
+      </div>
+      <div class="focus">
+        <div class="focus-item rv" style="--d:120ms">
+          <span class="focus-ico" aria-hidden="true">
+            <svg viewBox="0 0 28 28" fill="none"><rect x="4" y="5" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="16" y="5" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="4" y="17" width="8" height="6" rx="1" stroke="currentColor" stroke-width="1.6"/><path d="M16 20h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </span>
+          <div><strong>系统与玩法</strong><span>功能规则、交互流程、奖励与成长设计</span></div>
+        </div>
+        <div class="focus-item rv" style="--d:180ms">
+          <span class="focus-ico" aria-hidden="true">
+            <svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="9.2" stroke="currentColor" stroke-width="1.6"/><path d="M14 8v12M10.5 11h7M10.5 17h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </span>
+          <div><strong>商业化活动</strong><span>活动节奏、礼包结构、付费内容与资源投放</span></div>
+        </div>
+        <div class="focus-item rv" style="--d:240ms">
+          <span class="focus-ico" aria-hidden="true">
+            <svg viewBox="0 0 28 28" fill="none"><path d="M4 14 24 5l-6.6 18-4-7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M24 5 13.5 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </span>
+          <div><strong>跨团队交付</strong><span>需求评审、开发跟进、测试验收与上线复盘</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 经历 ==================== -->
+  <section class="sec" id="experience">
+    <div class="sec-head rv">
+      <span class="sec-idx">(02)</span>
+      <h2>工作经历<em>experience</em></h2>
+      <p class="sec-note">从执行策划成长为项目负责人，持续深耕长线运营手游。</p>
+    </div>
+    <div class="timeline">
+      <article class="job rv">
+        <span class="job-node" aria-hidden="true">01</span>
+        <div>
+          <div class="job-head">
+            <div>
+              <h3>项目负责人</h3>
+              <span class="org">辛克普雷科技有限公司 · 成都 Tap4fun 子公司</span>
+            </div>
+            <time>2025.09 — 2026.07</time>
+          </div>
+          <p class="desc">项目负责人临时调整后接手项目统筹与团队管理工作，协调 6 名成员，涵盖策划、程序、测试、客服和美术等岗位。在承担负责人职责的同时，继续完成活动策划、商业化内容设计、数值配置和上线复盘。</p>
+          <ul>
+            <li>负责团队任务分配、版本排期、需求评审和开发进度跟进</li>
+            <li>协调程序、美术、测试、客服等岗位，推进跨部门问题解决</li>
+            <li>跟进活动、礼包和系统功能的开发、验收与按期交付</li>
+            <li>结合项目节点和成员职责安排工作，及时识别并推进解决风险</li>
+            <li>连续 11 个月 KPI 达标，其中 S+ 3 个月、S 5 个月、A 3 个月</li>
+          </ul>
+        </div>
+      </article>
+      <article class="job rv">
+        <span class="job-node" aria-hidden="true">02</span>
+        <div>
+          <div class="job-head">
+            <div>
+              <h3>游戏策划</h3>
+              <span class="org">辛克普雷科技有限公司 · 成都 Tap4fun 子公司</span>
+            </div>
+            <time>2021.04 — 2025.09</time>
+          </div>
+          <p class="desc">负责项目活动体系和商业化内容的规划、设计与持续优化，参与游戏系统、功能玩法、用户交互和经济数值设计，并跟进开发至正式上线。</p>
+          <ul>
+            <li>负责节日活动及长期运营活动的整体方案设计</li>
+            <li>设计活动规则、任务流程、奖励结构、资源产出、礼包内容和付费机制</li>
+            <li>完成程序、美术和测试需求沟通、配置、验收及上线检查</li>
+            <li>根据运营数据、玩家反馈和市场变化调整活动节奏与资源投放</li>
+            <li>参与版本规划、内容迭代、运营问题分析及国服和海外版本适配</li>
+            <li>独立设计并推动 30+ 项新活动上线，40 个月绩效中 S 级及以上占比 82.5%</li>
+          </ul>
+        </div>
+      </article>
+      <article class="job rv">
+        <span class="job-node" aria-hidden="true">03</span>
+        <div>
+          <div class="job-head">
+            <div>
+              <h3>实习 / 执行策划</h3>
+              <span class="org">辛克普雷科技有限公司 · 成都 Tap4fun 子公司</span>
+            </div>
+            <time>2020.05 — 2021.04</time>
+          </div>
+          <p class="desc">参与《谜案侦探》《汉字消消乐》《开心消方块》《刺杀任务》等多款休闲游戏的关卡设计、配置、场景搭建、文案、音效和美术需求审核，并根据玩家反馈优化关卡流程、难度和引导体验。</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ==================== 项目 ==================== -->
+  <section class="sec" id="project">
+    <div class="sec-head rv">
+      <span class="sec-idx">(03)</span>
+      <h2>代表项目<em>project</em></h2>
+    </div>
+    <article class="project rv">
+      <div class="project-cover">
+        <span class="badge">live service · global</span>
+        <div>
+          <h3>银河传说</h3>
+          <p class="sub">Galaxy Legend · 科幻星战策略卡牌</p>
+        </div>
+        <div class="cover-art">
+          <svg viewBox="0 0 300 150" fill="none" aria-hidden="true">
+            <circle cx="240" cy="42" r="52" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 6" opacity=".35"/>
+            <circle cx="240" cy="42" r="30" stroke="currentColor" stroke-width="1.1" stroke-dasharray="3 5" opacity=".25"/>
+            <g stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
+              <path d="M34 104c0-12 8-22 19-22s19 10 19 22c0 8-3 14-8 17H42c-5-3-8-9-8-17z"/>
+              <circle cx="53" cy="102" r="6" stroke-width="1.5"/>
+              <path d="M39 118l-7 14 11-4M67 118l7 14-11-4" stroke-width="1.5"/>
+            </g>
+            <g stroke="currentColor" stroke-width="1" opacity=".25">
+              <path d="M36 96l14-8M36 102l18-10M36 108l22-12"/>
+            </g>
+            <path d="M92 58c14-8 30-8 44 0s30 8 44 0" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 4" opacity=".5"/>
+            <path d="M150 22l2.8 6.6 6.6 2.8-6.6 2.8-2.8 6.6-2.8-6.6-6.6-2.8 6.6-2.8z" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M112 120l2 4.6 4.6 2-4.6 2-2 4.6-2-4.6-4.6-2 4.6-2z" stroke="currentColor" stroke-width="1.1" opacity=".7"/>
+            <text x="286" y="140" text-anchor="end" font-size="9" opacity=".5">fig.02</text>
+          </svg>
+        </div>
+      </div>
+      <div class="project-body">
+        <h4>长期运营卡牌项目</h4>
+        <p>项目为卡牌手游《银河传说》（海外名：Galaxy Legend），覆盖国服及海外版本。我负责活动体系、商业化内容和部分系统功能的规划设计，围绕运营数据、玩家反馈和版本目标持续更新内容。</p>
+        <div class="points">
+          <div><b>活动运营</b><span>节日活动、长期运营活动及活动节奏设计</span></div>
+          <div><b>商业化设计</b><span>礼包内容、付费机制、资源产出和投放策略</span></div>
+          <div><b>系统与数值</b><span>系统功能、用户交互、奖励结构和经济数值</span></div>
+          <div><b>版本交付</b><span>需求沟通、配置制作、开发跟进、验收与复盘</span></div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ==================== 作品集 ==================== -->
+  <section class="sec" id="portfolio">
+    <div class="sec-head rv">
+      <span class="sec-idx">(04)</span>
+      <h2>个人作品集<em>portfolio</em></h2>
+      <p class="sec-note">活动、系统、数值配置与问题分析材料，点击标题在线预览，或下载原文件。</p>
+    </div>
+    <div class="folio">
+      <article class="card folio-group tilt-l rv">
+        <div class="fg-head"><span class="n">01</span><h3>商业化活动设计与配置</h3></div>
+        <p class="fg-desc">从活动规则、奖励结构到配置落地的完整案例。</p>
+        <ul class="rows">
+          <li class="row">
+            <a class="row-main" href="%E9%A2%84%E8%A7%88/%E6%B4%BB%E5%8A%A8%E8%AE%BE%E8%AE%A1-%E9%85%8D%E7%BD%AE-%E6%84%9A%E4%BA%BA%E8%8A%82.xlsx.html" target="_blank" rel="noopener">
+              <span><b>活动设计 &amp; 配置 · 愚人节</b><small>活动方案、奖励与配置内容</small></span>
+              <span class="row-go">在线预览 →</span>
+            </a>
+            <a class="row-dl" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E8%AE%BE%E8%AE%A1%26%E9%85%8D%E7%BD%AE-%E6%84%9A%E4%BA%BA%E8%8A%82.xlsx" download="活动设计&配置-愚人节.xlsx" data-dl="活动设计&配置-愚人节.xlsx" title="下载原文件 · 活动设计&配置-愚人节.xlsx" aria-label="下载 活动设计配置愚人节 原文件"><span class="dl-ico" aria-hidden="true">↓</span><span class="dl-txt">下载</span></a>
+          </li>
+        </ul>
+      </article>
+
+      <article class="card folio-group tilt-r rv" style="--d:60ms">
+        <div class="fg-head"><span class="n">02</span><h3>商业化活动案例</h3></div>
+        <p class="fg-desc">展示礼盒、抽签和活动商业化结构设计。</p>
+        <ul class="rows">
+          <li class="row">
+            <a class="row-main" href="%E9%A2%84%E8%A7%88/%E6%B4%BB%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%98%9F%E7%9B%9F-%E5%85%B1%E5%90%AF%E7%A4%BC%E7%9B%92.xlsx.html" target="_blank" rel="noopener">
+              <span><b>活动开发 · 星盟·共启礼盒</b><small>礼盒活动设计与配置</small></span>
+              <span class="row-go">在线预览 →</span>
+            </a>
+            <a class="row-dl" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%98%9F%E7%9B%9F%C2%B7%E5%85%B1%E5%90%AF%E7%A4%BC%E7%9B%92.xlsx" download="活动开发-星盟·共启礼盒.xlsx" data-dl="活动开发-星盟·共启礼盒.xlsx" title="下载原文件 · 活动开发-星盟·共启礼盒.xlsx" aria-label="下载 星盟共启礼盒 原文件"><span class="dl-ico" aria-hidden="true">↓</span><span class="dl-txt">下载</span></a>
+          </li>
+          <li class="row">
+            <a class="row-main" href="%E9%A2%84%E8%A7%88/%E6%B4%BB%E5%8A%A8%E5%BC%80%E5%8F%91-%E5%91%A8%E5%B9%B4%E5%BA%86-%E5%B9%B8%E8%BF%90%E4%B8%AD%E7%AD%BE.xlsx.html" target="_blank" rel="noopener">
+              <span><b>活动开发 · 周年庆・幸运中签</b><small>周年庆活动机制与配置</small></span>
+              <span class="row-go">在线预览 →</span>
+            </a>
+            <a class="row-dl" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%BC%80%E5%8F%91-%E5%91%A8%E5%B9%B4%E5%BA%86%E3%83%BB%E5%B9%B8%E8%BF%90%E4%B8%AD%E7%AD%BE.xlsx" download="活动开发-周年庆・幸运中签.xlsx" data-dl="活动开发-周年庆・幸运中签.xlsx" title="下载原文件 · 活动开发-周年庆・幸运中签.xlsx" aria-label="下载 周年庆幸运中签 原文件"><span class="dl-ico" aria-hidden="true">↓</span><span class="dl-txt">下载</span></a>
+          </li>
+        </ul>
+      </article>
+
+      <article class="card folio-group tilt-r rv">
+        <div class="fg-head"><span class="n">03</span><h3>系统设计案例</h3></div>
+        <p class="fg-desc">展示系统规则、界面逻辑和功能配置思路。</p>
+        <ul class="rows">
+          <li class="row">
+            <a class="row-main" href="%E9%A2%84%E8%A7%88/%E7%B3%BB%E7%BB%9F-%E6%B0%AA%E6%99%B6%E5%90%88%E6%88%90-%E6%B0%AA%E6%99%B6%E7%86%94%E7%82%89.xlsx.html" target="_blank" rel="noopener">
+              <span><b>系统 · 氪晶合成-氪晶熔炉</b><small>合成系统规则与配置</small></span>
+              <span class="row-go">在线预览 →</span>
+            </a>
+            <a class="row-dl" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E7%B3%BB%E7%BB%9F-%E6%B0%AA%E6%99%B6%E5%90%88%E6%88%90-%E6%B0%AA%E6%99%B6%E7%86%94%E7%82%89.xlsx" download="系统-氪晶合成-氪晶熔炉.xlsx" data-dl="系统-氪晶合成-氪晶熔炉.xlsx" title="下载原文件 · 系统-氪晶合成-氪晶熔炉.xlsx" aria-label="下载 氪晶合成 原文件"><span class="dl-ico" aria-hidden="true">↓</span><span class="dl-txt">下载</span></a>
+          </li>
+          <li class="row">
+            <a class="row-main" href="%E9%A2%84%E8%A7%88/%E7%B3%BB%E7%BB%9F-%E6%AF%8D%E8%88%B0%E7%B3%BB%E7%BB%9F%E7%95%8C%E9%9D%A2%E4%B8%8E%E7%95%8C%E9%9D%A2%E9%80%BB%E8%BE%91.xlsx.html" target="_blank" rel="noopener">
+              <span><b>系统 · 母舰系统界面与界面逻辑</b><small>系统界面和交互逻辑</small></span>
+              <span class="row-go">在线预览 →</span>
+            </a>
+            <a class="row-dl" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E7%B3%BB%E7%BB%9F-%E6%AF%8D%E8%88%B0%E7%B3%BB%E7%BB%9F%E7%95%8C%E9%9D%A2%E4%B8%8E%E7%95%8C%E9%9D%A2%E9%80%BB%E8%BE%91.xlsx" download="系统-母舰系统界面与界面逻辑.xlsx" data-dl="系统-母舰系统界面与界面逻辑.xlsx" title="下载原文件 · 系统-母舰系统界面与界面逻辑.xlsx" aria-label="下载 母舰系统 原文件"><span class="dl-ico" aria-hidden="true">↓</span><span class="dl-txt">下载</span></a>
+          </li>
+        </ul>
+      </article>
+
+      <article class="card folio-group tilt-l rv" style="--d:60ms">
+        <div class="fg-head"><span class="n">04</span><h3>其他分析与规划</h3></div>
+        <p class="fg-desc">展示活动规划、问题拆解和方案思考过程。</p>
+        <ul class="rows">
+          <li class="row">
+            <a class="row-main" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E5%91%A8%E5%B9%B4%E5%BA%86%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE.png" target="_blank" rel="noopener">
+              <span><b>周年庆思维导图</b><small>周年庆内容规划</small></span>
+              <span class="row-go">查看 →</span>
+            </a>
+            <a class="row-dl" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E5%91%A8%E5%B9%B4%E5%BA%86%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE.png" download="周年庆思维导图.png" data-dl="周年庆思维导图.png" title="下载原文件 · 周年庆思维导图.png" aria-label="下载 周年庆思维导图"><span class="dl-ico" aria-hidden="true">↓</span><span class="dl-txt">下载</span></a>
+          </li>
+          <li class="row">
+            <a class="row-main" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%8B%89%E6%94%B6%E6%B4%BB%E5%8A%A8%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE.png" target="_blank" rel="noopener">
+              <span><b>拉收活动思维导图</b><small>拉收活动结构梳理</small></span>
+              <span class="row-go">查看 →</span>
+            </a>
+            <a class="row-dl" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%8B%89%E6%94%B6%E6%B4%BB%E5%8A%A8%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE.png" download="拉收活动思维导图.png" data-dl="拉收活动思维导图.png" title="下载原文件 · 拉收活动思维导图.png" aria-label="下载 拉收活动思维导图"><span class="dl-ico" aria-hidden="true">↓</span><span class="dl-txt">下载</span></a>
+          </li>
+          <li class="row">
+            <a class="row-main" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90%E8%A7%A3%E5%86%B3.png" target="_blank" rel="noopener">
+              <span><b>问题分析解决</b><small>问题定位与解决方案</small></span>
+              <span class="row-go">查看 →</span>
+            </a>
+            <a class="row-dl" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90%E8%A7%A3%E5%86%B3.png" download="问题分析解决.png" data-dl="问题分析解决.png" title="下载原文件 · 问题分析解决.png" aria-label="下载 问题分析解决"><span class="dl-ico" aria-hidden="true">↓</span><span class="dl-txt">下载</span></a>
+          </li>
+          <li class="row">
+            <a class="row-main" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E7%95%8C%E9%9D%A2%E9%80%BB%E8%BE%91.jpg" target="_blank" rel="noopener">
+              <span><b>界面逻辑</b><small>界面流程与交互示意</small></span>
+              <span class="row-go">查看 →</span>
+            </a>
+            <a class="row-dl" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E7%95%8C%E9%9D%A2%E9%80%BB%E8%BE%91.jpg" download="界面逻辑.jpg" data-dl="界面逻辑.jpg" title="下载原文件 · 界面逻辑.jpg" aria-label="下载 界面逻辑"><span class="dl-ico" aria-hidden="true">↓</span><span class="dl-txt">下载</span></a>
+          </li>
+        </ul>
+      </article>
+
+      <article class="card folio-group wide rv">
+        <div class="fg-head"><span class="n">05</span><h3>活动和系统示意图</h3></div>
+        <p class="fg-desc">用于辅助需求表达、评审和跨部门沟通的界面与系统示意图，点击任意一张查看大图。</p>
+        <div class="shots">
+          <a class="shot" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E6%AF%8D%E8%88%B0%E7%B3%BB%E7%BB%9F%E4%B8%BB%E7%95%8C%E9%9D%A2.png" target="_blank" rel="noopener">
+            <img src="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E6%AF%8D%E8%88%B0%E7%B3%BB%E7%BB%9F%E4%B8%BB%E7%95%8C%E9%9D%A2.png" alt="母舰系统主界面示意图" loading="lazy">
+            <span>母舰系统主界面</span>
+          </a>
+          <a class="shot" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E8%88%B0%E8%88%B9%E6%93%8D%E4%BD%9C%E7%95%8C%E9%9D%A2.png" target="_blank" rel="noopener">
+            <img src="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E8%88%B0%E8%88%B9%E6%93%8D%E4%BD%9C%E7%95%8C%E9%9D%A2.png" alt="舰船操作界面示意图" loading="lazy">
+            <span>舰船操作界面</span>
+          </a>
+          <a class="shot" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E9%A9%BE%E9%A9%B6%E8%88%B1.png" target="_blank" rel="noopener">
+            <img src="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E9%A9%BE%E9%A9%B6%E8%88%B1.png" alt="驾驶舱界面示意图" loading="lazy">
+            <span>驾驶舱</span>
+          </a>
+          <a class="shot" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E8%A3%85%E7%94%B2%E5%A4%96%E5%A3%B3.png" target="_blank" rel="noopener">
+            <img src="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E8%A3%85%E7%94%B2%E5%A4%96%E5%A3%B3.png" alt="装甲外壳界面示意图" loading="lazy">
+            <span>装甲外壳</span>
+          </a>
+          <a class="shot" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E9%98%B2%E6%8A%A4%E7%BD%A9.png" target="_blank" rel="noopener">
+            <img src="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E9%98%B2%E6%8A%A4%E7%BD%A9.png" alt="防护罩界面示意图" loading="lazy">
+            <span>防护罩</span>
+          </a>
+          <a class="shot" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E8%88%B9%E8%88%B1%E5%8D%87%E6%98%9F%E5%8D%87%E7%BA%A7.png" target="_blank" rel="noopener">
+            <img src="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E8%88%B9%E8%88%B1%E5%8D%87%E6%98%9F%E5%8D%87%E7%BA%A7.png" alt="船舱升星升级界面示意图" loading="lazy">
+            <span>船舱升星升级</span>
+          </a>
+          <a class="shot" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E5%A5%BD%E5%8F%8B%E5%BA%A6%E7%AD%89%E7%BA%A7.png" target="_blank" rel="noopener">
+            <img src="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E5%A5%BD%E5%8F%8B%E5%BA%A6%E7%AD%89%E7%BA%A7.png" alt="好友度等级界面示意图" loading="lazy">
+            <span>好友度等级</span>
+          </a>
+          <a class="shot" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E6%8A%BD%E5%8D%A11.png" target="_blank" rel="noopener">
+            <img src="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E6%8A%BD%E5%8D%A11.png" alt="抽卡界面示意图" loading="lazy">
+            <span>抽卡界面</span>
+          </a>
+          <a class="shot" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E7%AD%BE%E5%88%B0.png" target="_blank" rel="noopener">
+            <img src="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E7%AD%BE%E5%88%B0.png" alt="签到界面示意图" loading="lazy">
+            <span>签到</span>
+          </a>
+          <a class="shot" href="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E9%80%9A%E8%A1%8C%E8%AF%81.png" target="_blank" rel="noopener">
+            <img src="%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B4%BB%E5%8A%A8%E5%92%8C%E7%B3%BB%E7%BB%9F%E7%A4%BA%E6%84%8F%E5%9B%BE/%E9%80%9A%E8%A1%8C%E8%AF%81.png" alt="通行证界面示意图" loading="lazy">
+            <span>通行证</span>
+          </a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ==================== 能力 ==================== -->
+  <section class="sec" id="skills">
+    <div class="sec-head rv">
+      <span class="sec-idx">(05)</span>
+      <h2>专业能力<em>capabilities</em></h2>
+      <p class="sec-note">兼顾设计、配置、沟通与交付，能按项目需要推进完整策划链路。</p>
+    </div>
+    <div class="skills">
+      <article class="skill rv">
+        <div class="skill-top">
+          <span class="skill-ico" aria-hidden="true">
+            <svg viewBox="0 0 28 28" fill="none"><rect x="4" y="5" width="20" height="17" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M8 10.5h12M8 14.5h9M8 18.5h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </span>
+          <span class="num">01</span>
+        </div>
+        <h3>系统与商业化策划</h3>
+        <p>负责系统功能、活动玩法、礼包和付费墙、奖励产出与经济数值设计，兼顾活动节奏和长期运营。</p>
+        <div class="pills"><span>系统功能</span><span>活动玩法</span><span>礼包设计</span><span>经济数值</span></div>
+      </article>
+      <article class="skill rv" style="--d:60ms">
+        <div class="skill-top">
+          <span class="skill-ico" aria-hidden="true">
+            <svg viewBox="0 0 28 28" fill="none"><path d="M4 24V5M4 24h20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9 20v-5M14 20V9M19 20v-7M24 20v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </span>
+          <span class="num">02</span>
+        </div>
+        <h3>数据与数值</h3>
+        <p>熟练使用 Excel 公式、透视表和图表，分析月收入、礼包销售、DAU、DAC 和 ARPU，并据此调整活动组合。</p>
+        <div class="pills"><span>Excel</span><span>DAU / DAC</span><span>ARPU</span><span>资源产出</span></div>
+      </article>
+      <article class="skill rv" style="--d:120ms">
+        <div class="skill-top">
+          <span class="skill-ico" aria-hidden="true">
+            <svg viewBox="0 0 28 28" fill="none"><path d="M3.5 13 24 4.5l-6.6 18-4-7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M24 4.5 13.4 15.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </span>
+          <span class="num">03</span>
+        </div>
+        <h3>项目推进与协作</h3>
+        <p>能输出策划案、需求文档、流程图、配置表和原型图，协调程序、美术、测试、客服和运营团队推进交付。</p>
+        <div class="pills"><span>版本管理</span><span>跨团队协作</span><span>开发跟进</span><span>上线验收</span></div>
+      </article>
+      <article class="skill rv">
+        <div class="skill-top">
+          <span class="skill-ico" aria-hidden="true">
+            <svg viewBox="0 0 28 28" fill="none"><path d="M18 4.5a5.5 5.5 0 0 0-7 7L4.5 18a2.6 2.6 0 0 0 3.7 3.7l6.5-6.5a5.5 5.5 0 0 0 7-7l-3.1 3.1-3.1-3.1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="num">04</span>
+        </div>
+        <h3>策划与制作工具</h3>
+        <p>熟练使用 Excel、Axure、XMind、Visio、Word、PowerPoint、Photoshop、Premiere 和剪映。</p>
+        <div class="pills"><span>Axure</span><span>XMind</span><span>Visio</span><span>PowerPoint</span></div>
+      </article>
+      <article class="skill rv" style="--d:60ms">
+        <div class="skill-top">
+          <span class="skill-ico" aria-hidden="true">
+            <svg viewBox="0 0 28 28" fill="none"><path d="M10 8 5 14l5 6M18 8l5 6-5 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 6.5 12.5 22" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          </span>
+          <span class="num">05</span>
+        </div>
+        <h3>技术基础</h3>
+        <p>具备 Unity 基础、C# / C 编程基础以及 Git / SVN 基础使用能力，便于理解开发实现和协作流程。</p>
+        <div class="pills"><span>Unity</span><span>C# / C</span><span>Git / SVN</span><span>数字媒体技术</span></div>
+      </article>
+      <article class="skill rv" style="--d:120ms">
+        <div class="skill-top">
+          <span class="skill-ico" aria-hidden="true">
+            <svg viewBox="0 0 28 28" fill="none"><path d="M14 4l2.8 7 7 2.8-7 2.8-2.8 7-2.8-7-7-2.8 7-2.8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M22 4v4M20 6h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </span>
+          <span class="num">06</span>
+        </div>
+        <h3>AI 应用</h3>
+        <p>使用 AI 辅助竞品分析、策划案初稿、配置表检查、活动原型、需求示意图和多语言文案初稿及翻译。</p>
+        <div class="pills"><span>竞品分析</span><span>配置检查</span><span>原型示意</span><span>多语言文案</span></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ==================== 教育 ==================== -->
+  <section class="sec" id="education">
+    <div class="sec-head rv">
+      <span class="sec-idx">(06)</span>
+      <h2>教育背景<em>education</em></h2>
+    </div>
+    <div class="card edu rv">
+      <div>
+        <h3>海南热带海洋学院</h3>
+        <p>数字媒体技术（工学方向） · 全日制本科</p>
+        <p>专业课程覆盖编程、游戏制作、Photoshop、交互设计、网页设计、3D 建模、动画制作和视频剪辑。</p>
+      </div>
+      <time>2016.09 — 2020.06</time>
+    </div>
+  </section>
+
+  <!-- ==================== 联系 ==================== -->
+  <section class="contact rv" id="contact">
+    <div>
+      <span class="sec-idx">(07)</span>
+      <h2>期待聊聊游戏与设计<span>。</span></h2>
+      <p>系统策划 · 商业化策划 · 活动策划 · 数值策划</p>
+    </div>
+    <div class="links">
+      <button class="btn solid" type="button" data-copy="xsh47@foxmail.com">✉ 邮件联系</button>
+      <button class="btn" type="button" data-copy="17723316421">☎ 17723316421</button>
+    </div>
+  </section>
+
+  <footer>
+    <span>© <span id="year">2026</span> 谢诗琦 · 游戏策划</span>
+    <a href="#top">回到顶部 ↑</a>
+  </footer>
+</main>
+
+<!-- ==================== 联系弹窗 ==================== -->
+<div class="modal" id="contact-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
+  <div class="modal-box">
+    <h2 id="modal-title">联系我</h2>
+    <p class="sub">欢迎通过邮箱交流游戏策划、系统设计与商业化项目。</p>
+    <div class="email-line">
+      <span class="email-val" id="email-value">xsh47@foxmail.com</span>
+      <button class="copy" type="button" id="copy-email">复制邮箱</button>
+    </div>
+    <div class="modal-foot">
+      <button class="text-btn" type="button" id="close-contact">关闭</button>
+      <button class="btn" type="button" data-copy="xsh47@foxmail.com">复制邮箱</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 悬浮返回顶部 ==================== -->
+<button class="to-top" id="to-top" type="button" title="回到顶部" aria-label="回到顶部">
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M12 20.4V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M5.6 11 12 4.4 18.4 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <span class="lbl">TOP</span>
+</button>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span id="toast-txt">正在准备下载…</span>
+  <a id="toast-act" href="#" target="_blank" rel="noopener" hidden>在新窗口打开</a>
+</div>
+
+<script>
+(() => {
+  const root = document.documentElement;
+
+  /* 主题（支持 ?theme=dark 链接参数） */
+  const urlTheme = new URLSearchParams(location.search).get('theme');
+  const themeBtn = document.getElementById('theme-toggle');
+  const saved = localStorage.getItem('profile-theme');
+  if (urlTheme === 'dark' || urlTheme === 'light') root.dataset.theme = urlTheme;
+  else if (saved === 'dark' || saved === 'light') root.dataset.theme = saved;
+  const syncTheme = () => {
+    const dark = root.dataset.theme === 'dark';
+    themeBtn.textContent = dark ? '☀' : '☾';
+    const label = dark ? '切换为浅色模式' : '切换为深色模式';
+    themeBtn.setAttribute('aria-label', label);
+    themeBtn.title = label;
+    document.querySelector('meta[name="theme-color"]')
+      .setAttribute('content', dark ? '#1e1d1b' : '#f5f0e8');
+  };
+  syncTheme();
+  themeBtn.addEventListener('click', () => {
+    root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('profile-theme', root.dataset.theme);
+    syncTheme();
+  });
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  /* 弹窗 */
+  const modal = document.getElementById('contact-modal');
+  const openBtn = document.getElementById('open-contact');
+  const closeBtn = document.getElementById('close-contact');
+  const copyBtn = document.getElementById('copy-email');
+  const email = document.getElementById('email-value').textContent;
+  let lastFocus = null;
+
+  const openModal = () => {
+    lastFocus = document.activeElement;
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    closeBtn.focus();
+  };
+  const closeModal = () => {
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    if (lastFocus) lastFocus.focus();
+  };
+  openBtn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+    if (e.key === 'Tab' && modal.classList.contains('open')) {
+      const f = modal.querySelectorAll('button, a[href]');
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+  copyBtn.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(email); }
+    catch {
+      const t = document.createElement('textarea');
+      t.value = email; t.style.position = 'fixed'; t.style.opacity = '0';
+      document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove();
+    }
+    copyBtn.textContent = '已复制 ✓';
+    setTimeout(() => { copyBtn.textContent = '复制邮箱'; }, 1600);
+  });
+
+  /* 联系方式：不用 tel: / mailto: 协议链接，点击改为复制 */
+  document.querySelectorAll('[data-copy]').forEach(btn => {
+    const label = btn.textContent;
+    btn.addEventListener('click', async () => {
+      const val = btn.dataset.copy;
+      try { await navigator.clipboard.writeText(val); }
+      catch {
+        const t = document.createElement('textarea');
+        t.value = val; t.style.position = 'fixed'; t.style.opacity = '0';
+        document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove();
+      }
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = label; }, 1600);
+    });
+  });
+
+  /* 进场 */
+  const items = document.querySelectorAll('.rv');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+    items.forEach(el => io.observe(el));
+  } else {
+    items.forEach(el => el.classList.add('in'));
+  }
+
+  /* 悬浮返回顶部 */
+  const toTopBtn = document.getElementById('to-top');
+  toTopBtn.addEventListener('click', () => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+  });
+
+  /* 作品集下载：兼容内嵌预览（沙箱会拦截 download 属性）与本地双击打开 */
+  const toastEl = document.getElementById('toast');
+  const toastTxt = document.getElementById('toast-txt');
+  const toastAct = document.getElementById('toast-act');
+  let toastTimer;
+  function toast(msg, act) {
+    toastTxt.textContent = msg;
+    if (act) { toastAct.href = act.href; toastAct.textContent = act.label; toastAct.hidden = false; }
+    else { toastAct.hidden = true; toastAct.removeAttribute('href'); }
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), act ? 15000 : 3600);
+  }
+
+  const embedded = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+  const BIG = 30 * 1024 * 1024;
+
+  function saveAs(url, name) {
+    const tmp = document.createElement('a');
+    tmp.href = url; tmp.download = name;
+    tmp.style.display = 'none';
+    document.body.appendChild(tmp);
+    tmp.click();
+    tmp.remove();
+  }
+
+  document.addEventListener('click', async e => {
+    const a = e.target.closest('a[data-dl]');
+    if (!a) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const url = a.getAttribute('href');
+    const name = a.dataset.dl;
+
+    /* 普通浏览器 + http(s)：交给原生 download，最省事最稳 */
+    if (!embedded && location.protocol !== 'file:') {
+      toast('开始下载：' + name);
+      return;
+    }
+
+    e.preventDefault();
+    a.classList.add('busy');
+    toast('正在准备：' + name + ' …');
+    try {
+      if (location.protocol === 'file:') throw new Error('file');
+      const head = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+      if (!head.ok) throw new Error('HTTP ' + head.status);
+      const len = Number(head.headers.get('Content-Length') || 0);
+      if (len > BIG) {                       // 大文件交给浏览器流式下载，避免整包读进内存
+        saveAs(url, name);
+        toast('正在下载：' + name + '（约 ' + Math.round(len / 1048576) + 'MB）', { href: url, label: '没有反应？点这里' });
+      } else {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const blob = await res.blob();
+        const obj = URL.createObjectURL(blob);
+        saveAs(obj, name);
+        setTimeout(() => URL.revokeObjectURL(obj), 20000);
+        toast('已开始下载：' + name, { href: url, label: '没有反应？点这里' });
+      }
+    } catch (err) {
+      try { saveAs(url, name); } catch (e2) {}
+      toast('这个预览环境可能拦截了下载：' + name, { href: url, label: '在新窗口打开' });
+    } finally {
+      a.classList.remove('busy');
+    }
+  });
+
+  /* 导航高亮 */
+  const links = [...document.querySelectorAll('.nav a')];
+  const secs = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  if ('IntersectionObserver' in window && secs.length) {
+    const navIO = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        if (!en.isIntersecting) return;
+        links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + en.target.id));
+      });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    secs.forEach(s => navIO.observe(s));
+  }
+})();
+</script>
+
+<script>
+/* ================= 两侧留白小游戏：火柴人弹弓 × 球形小动物 =================
+   左：火柴人拿弹弓，鼠标决定射击方向，抛物线辅助线贯穿整屏
+   右：球形小动物按俄罗斯方块规则下落，落地后滚动 + 轻微弹跳
+   打中一只 +1 分；左上角可计分 / 暂停 / 重置。纯装饰，不抢正文的点击与滚动。 */
+(() => {
+  const layer  = document.getElementById('bg-tetris');
+  const leftC  = document.getElementById('bt-left');
+  const rightC = document.getElementById('bt-right');
+  const shotC  = document.getElementById('bt-shot');
+  if (!layer || !leftC || !rightC || !shotC) return;
+
+  const hud      = document.getElementById('game-hud');
+  const scoreEl  = document.getElementById('hud-score');
+  const ammoEl   = document.getElementById('hud-bullets');
+  const pauseBtn = document.getElementById('hud-pause');
+  const pauseIco = document.getElementById('hud-pause-ico');
+  const resetBtn = document.getElementById('hud-reset');
+  const histEl   = document.getElementById('hud-hist');
+  const pad      = document.getElementById('game-pad');
+  const padLeft  = document.getElementById('pad-left');
+  const padRot   = document.getElementById('pad-rot');
+  const padRight = document.getElementById('pad-right');
+  const padDown  = document.getElementById('pad-down');
+
+  const MIN_COLS = 8, MAX_COLS = 20;
+  const SHAPES = [
+    [[1,1,1,1]],
+    [[1,0,0],[1,1,1]],
+    [[0,0,1],[1,1,1]],
+    [[1,1],[1,1]],
+    [[0,1,1],[1,1,0]],
+    [[0,1,0],[1,1,1]],
+    [[1,1,0],[0,1,1]]
+  ];
+  const COLOR_KEYS = ['red', 'blue', 'green', 'yellow', 'ink'];
+
+  const G_BALL = 2200;          // 小动物下落 / 弹跳重力 px/s²（调小后落地更稳）
+  const G_SHOT = 1500;          // 弹丸重力 px/s²
+  const V0     = 1650;          // 弹弓初速 px/s
+  const SHOT_R = 3.6;           // 弹丸半径
+  const AIM_MIN = 8, AIM_MAX = 80;   // 瞄准角（度，相对水平线向上）
+
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const rand  = (a, b) => a + Math.random() * (b - a);
+  const DEG   = Math.PI / 180;
+
+  const motionMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let reduceMotion = motionMQ.matches;
+  if (motionMQ.addEventListener) motionMQ.addEventListener('change', e => { reduceMotion = e.matches; });
+
+  /* ---------------- 调色板（跟随深浅主题） ---------------- */
+  let palette = { hair: 'rgba(44,44,44,.2)', paper: '#f5f0e8', ink: '#2c2c2c' };
+  let paletteVer = 0;
+  function readPalette() {
+    const cs = getComputedStyle(document.documentElement);
+    COLOR_KEYS.forEach(k => {
+      palette[k] = (cs.getPropertyValue('--' + k) || '').trim() || '#2c2c2c';
+    });
+    palette.hair  = (cs.getPropertyValue('--hair')  || '').trim() || 'rgba(44,44,44,.2)';
+    palette.paper = (cs.getPropertyValue('--paper') || '').trim() || '#f5f0e8';
+    palette.ink   = (cs.getPropertyValue('--ink')   || '').trim() || '#2c2c2c';
+    paletteVer++;
+  }
+  readPalette();
+  new MutationObserver(readPalette)
+    .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  /* ---------------- 计分 / 弹药 / 暂停 ---------------- */
+  let score = 0, paused = false, visible = false;
+
+  const BULLET_START = 1;        // 一次同时发射的弹丸数
+  const MAX_BULLETS  = 3;        // 上限：最多 3 条弹道
+  const MIN_BULLETS  = 1;        // 下限：至少 1 条弹道
+  const DECAY_MS     = 10000;    // 10 秒没打到加弹道的弹药球，弹道 -1
+  let bullets = BULLET_START;
+  let ammoClock = 0;             // 距离上次拾取弹药球过去了多少毫秒
+
+  function syncBullets(pop) {
+    if (!ammoEl) return;
+    ammoEl.textContent = String(bullets);
+    if (pop) {
+      ammoEl.classList.remove('pop');
+      void ammoEl.offsetWidth;
+      ammoEl.classList.add('pop');
+    }
+  }
+
+  function addBullet(n) {
+    bullets = clamp(bullets + n, MIN_BULLETS, MAX_BULLETS);
+    syncBullets(true);
+  }
+
+  /* 弹道衰减：每满 10 秒未击中加弹道的弹药球，弹道数 -1（不低于 1）；
+     一旦打中弹药球立刻回满 10 秒 */
+  function stepBulletDecay(dt) {
+    if (bullets <= MIN_BULLETS) { ammoClock = 0; syncDecay(); return; }
+    ammoClock += dt * 1000;
+    if (ammoClock >= DECAY_MS) {
+      ammoClock = 0;
+      bullets = Math.max(MIN_BULLETS, bullets - 1);
+      syncBullets(true);
+      const o = archer.origin();
+      pops.push({ x: o.x, y: o.y - 34, life: 0, max: 1.1, text: '弹道 -1', kind: 'ammo' });
+    }
+    syncDecay();
+  }
+
+  let decayEl = document.getElementById('hud-decay');
+  let decayShown = -1;
+  function syncDecay() {
+    if (!decayEl) return;
+    if (bullets <= MIN_BULLETS) {
+      if (decayShown !== -2) { decayEl.textContent = ''; decayEl.style.opacity = '0'; decayShown = -2; }
+      return;
+    }
+    const left = Math.max(0, Math.ceil((DECAY_MS - ammoClock) / 1000));
+    if (decayShown !== left) {
+      decayEl.textContent = left + 's';
+      decayEl.style.opacity = left <= 3 ? '1' : '.55';
+      decayShown = left;
+    }
+  }
+
+  function bumpScore(n) {
+    score = Math.max(0, score + n);
+    if (!scoreEl) return;
+    scoreEl.textContent = String(score);
+    scoreEl.classList.remove('pop');
+    void scoreEl.offsetWidth;          // 重启动画
+    scoreEl.classList.add('pop');
+  }
+
+  /* ---------------- 前 5 局分数记录 ---------------- */
+  const HIST_KEY = 'bt_scores_v1';
+  const HIST_MAX = 5;
+  let rounds = [];
+  try {
+    const raw = localStorage.getItem(HIST_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(arr)) rounds = arr.filter(n => typeof n === 'number').slice(0, HIST_MAX);
+  } catch (e) { rounds = []; }
+
+  function renderHist() {
+    if (!histEl) return;
+    if (!rounds.length) { histEl.innerHTML = '<i>暂无</i>'; return; }
+    const top = Math.max.apply(null, rounds);
+    histEl.innerHTML = rounds.map(n =>
+      '<b' + (n === top ? ' class="top"' : '') + '>' + n + '</b>').join('');
+  }
+
+  function pushRound(n) {
+    if (n <= 0) return;                       // 0 分不占榜
+    rounds.unshift(n);
+    rounds = rounds.slice(0, HIST_MAX);       // 只留最近 5 局
+    try { localStorage.setItem(HIST_KEY, JSON.stringify(rounds)); } catch (e) {}
+    renderHist();
+  }
+
+  /* 开新一局：记录上一局分数，清零分数与弹道 */
+  function startNewRound(clearBoard) {
+    pushRound(score);
+    score = 0;
+    if (scoreEl) {
+      scoreEl.textContent = '0';
+      scoreEl.classList.remove('pop'); void scoreEl.offsetWidth; scoreEl.classList.add('pop');
+    }
+    bullets = BULLET_START; ammoClock = 0; syncBullets(); syncDecay();
+    if (clearBoard) board.reset();
+    shots.length = 0; parts.length = 0; pops.length = 0;
+    booms = []; waves.length = 0;
+    paused = false;
+    syncPauseUI();
+  }
+
+  function syncPauseUI() {
+    if (pauseIco) {
+      pauseIco.innerHTML = paused
+        ? '<path d="M3.2 2.3 9.3 6 3.2 9.7z" fill="currentColor" stroke="none"/>'
+        : '<path d="M4 2.5v7M8 2.5v7"/>';
+    }
+    if (pauseBtn) {
+      pauseBtn.setAttribute('aria-label', paused ? '继续游戏' : '暂停游戏');
+      pauseBtn.title = paused ? '继续' : '暂停';
+    }
+  }
+
+  /* ---------------- 瞄准状态 ---------------- */
+  let aimAngle = 45 * DEG;      // 与水平线夹角（正=向上）
+  let launchV = V0;             // 这一刻的出膛速度（由弹道反解得出）
+  let power = 1;                // 仅供拉弓动画使用的相对力度
+  let aimFresh = -1e9;          // 最近一次由鼠标更新瞄准的时间
+  let aimX = 0, aimY = 0;       // 最近一次瞄准的指针位置（画准星用）
+  let aimInField = false;       // 指针是否停在右侧棋盘区（画准星）
+  let overArcher = false;       // 鼠标是否停在左侧场景上
+  let recoil = 0;               // 发射后坐 1 → 0
+  let sideZone = null;          // 两侧空白可点击区：{l1:左区右界, r0:右区左界, top:顶栏下沿}
+
+  /* ================= 右侧：球形小动物 · 俄罗斯方块 ================= */
+  let boardRect = { left: 0, top: 0 };
+
+  function createBoard(canvas) {
+    const ctx = canvas.getContext('2d');
+    let cols = 10, rows = 20, cell = 16, dropMs = 500;
+    let grid = [], cur = null, acc = 0, overWait = 0;
+    let gridCv = null, gridVer = -1;
+    const MAX_SPECIAL = 5;            // 场上同时存在的特殊动物上限
+    let forceSpecial = null;          // 外部要求下一块必为某种特殊动物
+    let batchSeq = 0;                 // 批次号：同批落下的球不互相合并
+    let shakeAmt = 0;                 // 爆炸震屏
+    let topOutCb = null;              // 堆满顶部自动重开时的回调（清分数 / 弹道）
+    const fx = [];                    // 消行残影 / 命中爆点
+
+    const blank    = () => Array.from({ length: rows }, () => Array(cols).fill(null));
+    /* 半径：1 级就几乎顶满格子（挨着的球几乎没有缝），
+       每升 1 级再大一圈，6 级封顶（合成大西瓜的手感） */
+    const sphereR  = lv => cell * (0.46 + Math.min(((lv || 1) - 1), 5) * 0.082);
+
+    /* 场上特殊动物（炸药球 / 弹药球）的数量，含正在下落的那块 */
+    function countSpecial() {
+      let n = 0;
+      for (let r = 0; r < rows; r++)
+        for (let c = 0; c < cols; c++)
+          if (grid[r][c] && grid[r][c].type) n++;
+      if (cur) cur.types.forEach(row => row.forEach(t => { if (t) n++; }));
+      return n;
+    }
+
+    function newSphere(color, type, lv, b) {
+      return {
+        color, type: type || null,
+        lv: lv || 1,                  // 等级：1 级起步，合成一次 +1
+        b: b || 0,                    // 批次：同一块落下的小动物不互相合并
+        ox: 0, oy: 0, vx: 0, vy: 0,
+        rot: rand(-.4, .4), rotV: 0, squash: 0
+      };
+    }
+
+    /* 小动物的「物理」：重力下坠 + 落地弹跳 + 横向滚动，滚够半格就滑进隔壁空格（会散开） */
+    function stepSphere(s, r, c, dt) {
+      if (s.oy !== 0 || s.vy !== 0) {
+        s.vy += G_BALL * dt;
+        s.oy += s.vy * dt;
+        if (s.oy >= 0) {
+          s.oy = 0;
+          if (s.vy > 210) {
+            s.vy = -s.vy * .3;                               // 回弹（更收敛）
+            s.squash = Math.min(1, Math.abs(s.vy) / 620);
+            s.vx += rand(-14, 14);                           // 落地横向溅开（少吃一点）
+            s.rotV += rand(-3, 3);
+          } else s.vy = 0;
+        }
+      }
+
+      if (s.vx !== 0) {
+        s.ox += s.vx * dt;
+        s.rot += s.rotV * dt;
+        const half = cell * .5;
+        if (Math.abs(s.ox) >= half) {
+          const dir = s.ox > 0 ? 1 : -1;
+          const nc = c + dir;
+          // 贴着地面、隔壁是空格 → 真的滚过去（要求够猛：普通落地不会，只有被击中/炸飞才会）
+          if (nc >= 0 && nc < cols && !grid[r][nc] && Math.abs(s.oy) < cell * .3
+              && Math.abs(s.vx) > cell * 2.4) {
+            grid[r][nc] = s;
+            grid[r][c] = null;
+            s.ox -= dir * cell;
+            s.vx *= .86;
+            return;
+          }
+          s.ox = dir * half * .97;                           // 撞墙 / 撞到邻居 → 弹回
+          s.vx *= -.46;
+          s.rotV *= -.5;
+        }
+        const fr = Math.max(0, 1 - 3.4 * dt);                // 横向摩擦加大，滚两下就停
+        s.vx *= fr;
+        s.rotV *= fr;
+        if (Math.abs(s.vx) < 5) s.vx = 0;
+      } else if (s.ox !== 0) {
+        s.ox -= s.ox * Math.min(1, 12 * dt);                 // 停稳后回到格子中心
+        if (Math.abs(s.ox) < .4) s.ox = 0;
+      }
+
+      if (s.squash > 0) s.squash = Math.max(0, s.squash - dt * 3.6);
+    }
+
+    function fits(shape, x, y) {
+      for (let r = 0; r < shape.length; r++) {
+        for (let c = 0; c < shape[r].length; c++) {
+          if (!shape[r][c]) continue;
+          const bx = x + c, by = y + r;
+          if (bx < 0 || bx >= cols || by >= rows) return false;
+          if (by >= 0 && grid[by][bx]) return false;
+        }
+      }
+      return true;
+    }
+
+    function spawn() {
+      const shape = SHAPES[(Math.random() * SHAPES.length) | 0].map(r => r.slice());
+      const color = COLOR_KEYS[(Math.random() * COLOR_KEYS.length) | 0];
+      // 特殊小动物：一块里最多 1 个（炸药球 / 弹药球各半），其余照常是普通球；
+      // 场上已有 MAX_SPECIAL 个时不再生成，打掉一个才会再补
+      const cells = [];
+      shape.forEach((row, r) => row.forEach((v, c) => { if (v) cells.push([r, c]); }));
+      const types = shape.map(row => row.map(() => null));
+      const want = forceSpecial || (Math.random() < .38 ? 'any' : null);
+      forceSpecial = null;
+      if (want && countSpecial() < MAX_SPECIAL) {
+        const [r, c] = cells[(Math.random() * cells.length) | 0];
+        types[r][c] = (want === 'bomb' || want === 'ammo') ? want
+                      : (Math.random() < .5 ? 'bomb' : 'ammo');
+      }
+      cur = { shape, color, types, x: Math.floor((cols - shape[0].length) / 2), y: 0 };
+      acc = 0;
+      if (!fits(cur.shape, cur.x, cur.y)) overWait = 0.9;   // 堆到顶：停顿后清盘重开
+    }
+
+    /* 左右移动：控制条按钮 / 方向键 */
+    function moveBy(dx) {
+      if (!cur || overWait > 0) return false;
+      if (!fits(cur.shape, cur.x + dx, cur.y)) return false;
+      cur.x += dx;
+      return true;
+    }
+
+    /* 旋转：顺时针 90°，特殊球的位置跟着一起转；
+       贴墙转不开时自动左右让位（最多 2 格） */
+    function rotatePiece() {
+      if (!cur || overWait > 0) return false;
+      const sh = rotateMatrix(cur.shape);
+      const ty = rotateMatrix(cur.types);
+      let x = cur.x;
+      if (x + sh[0].length > cols) x = cols - sh[0].length;   // 先收回界内
+      if (x < 0) x = 0;
+      for (const tx of [x, x - 1, x + 1, x - 2, x + 2]) {
+        if (fits(sh, tx, cur.y)) { cur.shape = sh; cur.types = ty; cur.x = tx; return true; }
+      }
+      return false;
+    }
+
+    /* 快速下降：当前方块直落到底并立刻固定（硬降） */
+    function hardDrop() {
+      if (!cur || overWait > 0) return 0;
+      let moved = 0;
+      while (fits(cur.shape, cur.x, cur.y + 1)) { cur.y++; moved++; }
+      acc = 0;
+      lock();
+      if (moved) shakeAmt = reduceMotion ? 0 : Math.max(shakeAmt, 2.2);
+      return moved;
+    }
+
+    function reset() { grid = blank(); overWait = 0; cur = null; spawn(); }
+
+    /* 消行：整批移除后，上面的小动物整体下落（带弹跳） */
+    function clearLines() {
+      const full = [];
+      for (let r = 0; r < rows; r++) if (grid[r].every(Boolean)) full.push(r);
+      if (!full.length) return [];
+
+      const snap = full.map(r => ({ row: r, cells: grid[r].slice() }));
+      const newGrid = [];
+      for (let i = 0; i < full.length; i++) newGrid.push(Array(cols).fill(null));
+
+      for (let r = 0; r < rows; r++) {
+        if (full.indexOf(r) !== -1) continue;
+        const line = grid[r];
+        let below = 0;
+        for (let i = 0; i < full.length; i++) if (full[i] > r) below++;
+        if (below) line.forEach(s => {
+          if (!s) return;
+          s.oy -= below * cell;                       // 视觉上先留在原处
+          s.vy = Math.max(s.vy, 150);
+          s.vx += rand(-15, 15);                      // 落下来轻微左右晃一下
+        });
+        newGrid.push(line);
+      }
+      grid = newGrid;
+      return snap;
+    }
+
+    function lock() {
+      const batch = ++batchSeq;                      // 同一块落下的小动物同批次，彼此不合并
+      cur.shape.forEach((row, r) => row.forEach((v, c) => {
+        if (!v) return;
+        const by = cur.y + r, bx = cur.x + c;
+        if (by < 0) return;
+        const s = newSphere(cur.color, cur.types[r][c], 1, batch);
+        s.oy = -cell * 0.07;
+        s.vy = 210;
+        s.vx = rand(-26, 26);                         // 落地只微微歪一下，不再滚到隔壁
+        s.rotV = rand(-3.4, 3.4);
+        grid[by][bx] = s;
+      }));
+
+      const cleared = clearLines();
+      if (!reduceMotion) {
+        cleared.forEach(line => line.cells.forEach((s, c) => {
+          if (s) fx.push({ type: 'clear', c, r: line.row, color: s.color, t: 0, dur: 0.42 });
+        }));
+      }
+      cur = null;                                    // 旧块已入库，特殊球计数不要重复算它
+      spawn();
+    }
+
+    /* 某一列从缺口处整体塌落（带弹跳与横向散开） */
+    function dropCol(c) {
+      let write = rows - 1;
+      for (let y = rows - 1; y >= 0; y--) {
+        const t = grid[y][c];
+        if (!t) continue;
+        if (y !== write) {
+          grid[write][c] = t;
+          grid[y][c] = null;
+          t.oy -= (write - y) * cell;
+          t.vy = Math.max(t.vy, 120);
+          t.vx += rand(-12, 12);                      // 塌下来时也只轻微侧向晃
+        }
+        write--;
+      }
+    }
+
+    /* 被弹丸打中：移除 + 同列上方的小动物落下来 */
+    function damage(r, c) {
+      const s = grid[r][c];
+      if (!s) return null;
+      grid[r][c] = null;
+      dropCol(c);
+      fx.push({ type: 'pop', x: (c + .5) * cell + s.ox, y: (r + .5) * cell + s.oy, r: sphereR(s.lv), color: s.color, t: 0, dur: 0.36 });
+      return s;
+    }
+
+    /* 合成：不同批次下来的、同色同级的球挨在一起就并成一个 —— 等级 +1、个头变大。
+       特殊球不参与；合成产物有 10% 概率直接变成特殊球（随机炸药 / 弹药）。 */
+    function mergePass() {
+      let merged = 0;
+      for (let r = rows - 1; r >= 0; r--) {
+        for (let c = 0; c < cols; c++) {
+          const a = grid[r][c];
+          if (!a || a.type) continue;
+          for (let k = 0; k < 2; k++) {
+            const rr = r + (k ? 1 : 0), cc = c + (k ? 0 : 1);   // 只看右邻、下邻，避免重复判定
+            if (rr >= rows || cc >= cols) continue;
+            const b = grid[rr][cc];
+            if (!b || b.type || b.b === a.b) continue;
+            if (b.lv !== a.lv || b.color !== a.color) continue;
+
+            grid[rr][cc] = null;                                // b 并进 a
+            a.lv += 1;
+            a.b = ++batchSeq;
+            a.squash = .6;
+            a.vy = -130;
+            a.rotV = rand(-2.5, 2.5);
+            fx.push({ type: 'pop', x: (cc + .5) * cell, y: (rr + .5) * cell, r: sphereR(b.lv), color: b.color, t: 0, dur: .34 });
+            if (Math.random() < .1 && countSpecial() < MAX_SPECIAL)
+              a.type = Math.random() < .5 ? 'bomb' : 'ammo';
+            merged++;
+            break;
+          }
+        }
+      }
+      return merged;
+    }
+
+    function tick(dt) {
+      for (let i = fx.length - 1; i >= 0; i--) {
+        fx[i].t += dt;
+        if (fx[i].t >= fx[i].dur) fx.splice(i, 1);
+      }
+      if (shakeAmt > 0) shakeAmt = Math.max(0, shakeAmt - dt * 26);
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const s = grid[r][c];
+          if (s && (s.oy !== 0 || s.vy !== 0 || s.vx !== 0 || s.ox !== 0 || s.squash > 0)) {
+            stepSphere(s, r, c, dt);
+          }
+        }
+      }
+      if (overWait > 0) {
+        overWait -= dt;
+        if (overWait <= 0) { reset(); if (topOutCb) topOutCb(); }   // 堆到顶：清盘并开新一局
+        return;
+      }
+
+      mergePass();                       // 相邻的同色同级球接触即合成
+      if (!cur) return;
+
+      acc += dt;
+      const step = dropMs / 1000;
+      while (acc >= step) {
+        acc -= step;
+        if (!fits(cur.shape, cur.x, cur.y + 1)) { lock(); return; }
+        cur.y++;
+      }
+    }
+
+    /* 深色模式专属：😠 生气表情（怒眉 + 眯眼 + 撇嘴 + 爆筋） */
+    const isDark = () => document.documentElement.dataset.theme === 'dark';
+
+    function angerVein(px, py, s) {           // 💢 爆筋符号
+      ctx.save();
+      ctx.strokeStyle = palette.red || palette.paper;
+      ctx.lineWidth = Math.max(1, s * .17);
+      ctx.lineCap = 'round';
+      ctx.globalAlpha = .85;
+      ctx.beginPath();
+      ctx.moveTo(px - s * .55, py - s * .2); ctx.lineTo(px + s * .55, py - s * .7);
+      ctx.moveTo(px - s * .55, py + s * .2); ctx.lineTo(px + s * .55, py + s * .7);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    /* 手绘版 😠：粗怒眉（外挑内压）+ 斜眯的眼 + 嘴角下垂的撇嘴 + 红色爆筋 */
+    function angryFace(r, rot) {
+      /* 深色主题里 --ink 才是浅色，画在实色球上看得清 */
+      const ink = palette.ink || palette.paper;
+      ctx.save();
+      ctx.strokeStyle = ink;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.globalAlpha = .96;
+
+      /* 1) 怒眉：两侧各一道短斜笔，外端挑高、内端压低（中间留出空隙） */
+      ctx.lineWidth = Math.max(1.2, r * .135);
+      ctx.beginPath();
+      ctx.moveTo(-r * .42, -r * .34); ctx.lineTo(-r * .18, -r * .12);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo( r * .42, -r * .34); ctx.lineTo( r * .18, -r * .12);
+      ctx.stroke();
+
+      /* 2) 眉毛兼作眼睛（不再单独画眼点） */
+
+      /* 3) 撇嘴：宽而下垂的弧，份量与两道眉相当 */
+      ctx.lineWidth = Math.max(1.4, r * .17);
+      ctx.beginPath();
+      ctx.arc(0, r * .44, r * .32, Math.PI * 1.16, Math.PI * 1.84);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    /* 手绘风小球：填充 + 双层描边（模拟铅笔来回描两遍）；2 级以上换成等级数字 */
+    function ball(cx, cy, r, color, alpha, lw, squash, rot, face, lv) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      if (squash) ctx.scale(1 + squash * .2, 1 - squash * .2);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = color; ctx.lineWidth = lw;
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = .34; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(.7, .6, Math.max(1, r - .8), 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+
+      if (lv > 1) {                       // 合成过的球：球心写等级数字
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(rot * .4);
+        if (isDark()) angerVein(r * .46, -r * .46, r * .42);   // 深色模式也带一枚爆筋
+        ctx.fillStyle = isDark() ? (palette.ink || palette.paper) : palette.paper;
+        ctx.font = 'italic 700 ' + Math.max(8, Math.round(r * 1.2)) + 'px Georgia, "Songti SC", serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(lv), 0, r * .04);
+        ctx.restore();
+        return;
+      }
+
+      if (!face || r < 4) return;
+      // 眼睛 / 嘴：跟着滚动角度转，看得出在滚
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rot);
+      ctx.fillStyle = palette.paper;
+      const ey = -r * .1, ex = r * .3, er = Math.max(1.05, r * .16);
+      if (isDark()) {
+        angryFace(r, rot);
+      } else {
+        ctx.beginPath(); ctx.arc(-ex, ey, er, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc( ex, ey, er, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = palette.paper; ctx.lineWidth = 1; ctx.globalAlpha = .75;
+        ctx.beginPath(); ctx.arc(0, r * .26, r * .3, .25, Math.PI - .25); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    /* 特殊小动物：炸药球（深色 + 红环 + 引信）/ 弹药球（纸色圆牌 + 蓝色加号） */
+    function specialBall(s, cx, cy, r) {
+      if (s.type === 'bomb') {
+        ball(cx, cy, r, palette.ink, .88, 1.6, s.squash, s.rot, false);
+        ctx.save();
+        ctx.strokeStyle = palette.red;
+        ctx.fillStyle = palette.red;
+        ctx.globalAlpha = .92;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(cx, cy, r * .55, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx - r * .17, cy - r * .1, Math.max(.9, r * .1), 0, Math.PI * 2); ctx.fill();
+        // 引信 + 火花（轻微抖动，像在滋滋燃烧）
+        const wob = Math.sin(performance.now() / 110 + cx) * (r * .09);
+        ctx.beginPath();
+        ctx.moveTo(cx + r * .3, cy - r * .78);
+        ctx.quadraticCurveTo(cx + r * 1.02 + wob, cy - r * 1.12, cx + r * .62 + wob, cy - r * 1.58);
+        ctx.stroke();
+        ctx.fillStyle = palette.yellow || palette.red;
+        ctx.beginPath();
+        ctx.arc(cx + r * .6 + wob, cy - r * 1.6, Math.max(1.1, r * .18), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      } else {
+        ctx.save();
+        ctx.translate(cx, cy);
+        if (s.squash) ctx.scale(1 + s.squash * .2, 1 - s.squash * .2);
+        ctx.fillStyle = palette.paper;
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = palette.blue || palette.ink;
+        ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-r * .4, 0); ctx.lineTo(r * .4, 0);
+        ctx.moveTo(0, -r * .4); ctx.lineTo(0, r * .4);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    /* 方格纸底点：离屏画一次，逐帧只贴图 */
+    function buildGrid() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = cols * cell, h = rows * cell;
+      gridCv = document.createElement('canvas');
+      gridCv.width = Math.round(w * dpr);
+      gridCv.height = Math.round(h * dpr);
+      const g = gridCv.getContext('2d');
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.globalAlpha = .8;
+      g.fillStyle = palette.hair;
+      for (let r = 0; r <= rows; r++) {
+        for (let c = 0; c <= cols; c++) g.fillRect(c * cell - .5, r * cell - .5, 1.2, 1.2);
+      }
+      gridVer = paletteVer;
+    }
+
+    function draw() {
+      const w = cols * cell, h = rows * cell;
+      ctx.clearRect(0, 0, w, h);
+      if (shakeAmt > .15) {
+        ctx.save();
+        ctx.translate(rand(-shakeAmt, shakeAmt), rand(-shakeAmt, shakeAmt));
+        paint(w, h);
+        ctx.restore();
+      } else {
+        paint(w, h);
+      }
+    }
+
+    function paint(w, h) {
+      if (!gridCv || gridVer !== paletteVer) buildGrid();
+      ctx.drawImage(gridCv, 0, 0, w, h);
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const s = grid[r][c];
+          if (!s) continue;
+          const cx = (c + .5) * cell + s.ox, cy = (r + .5) * cell + s.oy;
+          if (s.type) specialBall(s, cx, cy, sphereR(s.lv));
+          else ball(cx, cy, sphereR(s.lv), palette[s.color] || palette.ink, .62, 1.5, s.squash, s.rot, true, s.lv);
+        }
+      }
+
+      // 消行残影 / 命中爆点
+      for (const f of fx) {
+        const p = 1 - f.t / f.dur;
+        if (f.type === 'pop') {
+          ctx.strokeStyle = f.color;
+          ctx.globalAlpha = .7 * p;
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (1 + (1 - p) * 1.1), 0, Math.PI * 2); ctx.stroke();
+          ctx.globalAlpha = .18 * p;
+          ctx.fillStyle = f.color;
+          ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (1 + (1 - p) * .8), 0, Math.PI * 2); ctx.fill();
+        } else {
+          const x = f.c * cell, y = f.r * cell;
+          ctx.strokeStyle = f.color; ctx.fillStyle = f.color;
+          ctx.globalAlpha = .3 * p;
+          ctx.fillRect(x + 1.5, y + 1.5, cell - 3, cell - 3);
+          ctx.globalAlpha = .5 * p;
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(x + 1.5, y + 1.5, cell - 3, cell - 3);
+        }
+      }
+      ctx.globalAlpha = 1;
+
+      // 正在下落的小动物 + 落点虚线
+      if (cur && overWait <= 0) {
+        let gy = cur.y;
+        while (fits(cur.shape, cur.x, gy + 1)) gy++;
+        const r = sphereR(1);
+        ctx.save();
+        ctx.globalAlpha = .34;
+        ctx.setLineDash([3, 3]);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = palette[cur.color] || palette.ink;
+        cur.shape.forEach((row, ri) => row.forEach((v, ci) => {
+          if (!v) return;
+          const y = gy + ri;
+          if (y < 0) return;
+          ctx.beginPath();
+          ctx.arc((cur.x + ci + .5) * cell, (y + .5) * cell, r, 0, Math.PI * 2);
+          ctx.stroke();
+        }));
+        ctx.restore();
+
+        cur.shape.forEach((row, ri) => row.forEach((v, ci) => {
+          if (!v) return;
+          const y = cur.y + ri;
+          if (y < 0) return;
+          const cx = (cur.x + ci + .5) * cell, cy = (y + .5) * cell;
+          if (cur.types[ri][ci]) specialBall({ type: cur.types[ri][ci], squash: 0, rot: 0 }, cx, cy, r);
+          else ball(cx, cy, r, palette[cur.color] || palette.ink, .78, 1.6, 0, 0, true);
+        }));
+      }
+
+      if (overWait > 0) {          // 堆到顶：整盘淡出，提示马上重开
+        ctx.globalAlpha = .5 * Math.min(1, (0.9 - overWait) / 0.4);
+        ctx.fillStyle = palette.paper;
+        ctx.fillRect(0, 0, w, h);
+        ctx.globalAlpha = 1;
+      }
+    }
+
+
+    grid = blank();
+    spawn();
+
+    return {
+      tick, draw, reset, damage,
+      /* 所有小动物的视口坐标（供弹丸命中检测） */
+      targets() {
+        const out = [];
+        for (let row = 0; row < rows; row++) {
+          for (let c = 0; c < cols; c++) {
+            const s = grid[row][c];
+            if (!s) continue;
+            out.push({
+              x: boardRect.left + (c + .5) * cell + s.ox,
+              y: boardRect.top + (row + .5) * cell + s.oy,
+              r: sphereR(s.lv), row, col: c, color: s.color, type: s.type, lv: s.lv
+            });
+          }
+        }
+        // 还在空中往下落的那几只，同样可以打
+        if (cur) {
+          cur.shape.forEach((row, r) => row.forEach((v, c) => {
+            if (!v) return;
+            const gy = cur.y + r, gx = cur.x + c;
+            if (gy < 0) return;
+            out.push({
+              x: boardRect.left + (gx + .5) * cell,
+              y: boardRect.top + (gy + .5) * cell,
+              r: sphereR(1), row: gy, col: gx,
+              color: cur.color, type: cur.types[r][c], lv: 1, fall: true
+            });
+          }));
+        }
+        return out;
+      },
+      /* 打中空中正在下落的一格：直接把它从方块里抹掉 */
+      hitFalling(r, c) {
+        if (!cur) return null;
+        const sr = r - cur.y, sc = c - cur.x;
+        if (sr < 0 || sr >= cur.shape.length || sc < 0 || sc >= cur.shape[0].length) return null;
+        if (!cur.shape[sr][sc]) return null;
+        const info = { color: cur.color, type: cur.types[sr][sc], lv: 1 };
+        cur.shape[sr][sc] = 0;
+        cur.types[sr][sc] = null;
+        fx.push({ type: 'pop', x: (c + .5) * cell, y: (r + .5) * cell,
+                  r: sphereR(1), color: cur.color, t: 0, dur: .34 });
+        if (!cur.shape.some(row => row.some(v => v))) {   // 整块被打空：直接换下一块
+          cur = null;
+          spawn();
+        }
+        return info;
+      },
+      /* 爆炸范围：以 (r0,c0) 为中心、切比雪夫距离 rad 内的所有小动物 */
+      cellsInRadius(r0, c0, rad) {
+        const out = [];
+        for (let r = Math.max(0, r0 - rad); r <= Math.min(rows - 1, r0 + rad); r++) {
+          for (let c = Math.max(0, c0 - rad); c <= Math.min(cols - 1, c0 + rad); c++) {
+            if (grid[r][c]) out.push({ r, c });
+          }
+        }
+        return out;
+      },
+      /* 一次性移除一组格子（爆炸），之后每列整体塌落；返回被移除的小动物 */
+      blast(cells) {
+        const removed = [];
+        const touched = new Set();
+        for (const p of cells) {
+          const s = grid[p.r] && grid[p.r][p.c];
+          if (!s) continue;
+          grid[p.r][p.c] = null;
+          touched.add(p.c);
+          removed.push({
+            r: p.r, c: p.c, color: s.color, type: s.type, lv: s.lv,
+            x: boardRect.left + (p.c + .5) * cell + s.ox,
+            y: boardRect.top + (p.r + .5) * cell + s.oy
+          });
+        }
+        for (const c of touched) {
+          let write = rows - 1;
+          for (let y = rows - 1; y >= 0; y--) {
+            const t = grid[y][c];
+            if (!t) continue;
+            if (y !== write) {
+              grid[write][c] = t;
+              grid[y][c] = null;
+              t.oy -= (write - y) * cell;
+              t.vy = Math.max(t.vy, 120);
+              t.vx += rand(-12, 12);
+            }
+            write--;
+          }
+        }
+        return removed;
+      },
+      cellSize() { return cell; },
+      moveBy,
+      rotate: rotatePiece,
+      drop: hardDrop,
+      forceOver() { overWait = 0.9; },   // 测试：直接触发堆顶清盘流程
+      curInfo() {
+        return cur ? { x: cur.x, y: cur.y, shape: cur.shape.map(r => r.slice()),
+                       types: cur.types.map(r => r.slice()), color: cur.color } : null;
+      },
+      setTopOut(fn) { topOutCb = typeof fn === 'function' ? fn : null; },
+      dims() { return { rows, cols }; },
+      map() {
+        return grid.map(row => row.map(s => s ? (s.type === 'bomb' ? 'B' : s.type === 'ammo' ? 'A' : 'o') : '.').join(''));
+      },
+      sphereR(lv) { return sphereR(lv); },
+      countSpecial() { return countSpecial(); },
+      /* 测试用：直接往某个格子里放一只球（buf 可指定颜色 / 等级 / 特殊类型） */
+      put(r, c, color, lv, type) {
+        if (r < 0 || r >= rows || c < 0 || c >= cols) return false;
+        grid[r][c] = newSphere(color || COLOR_KEYS[0], type || null, lv || 1, ++batchSeq);
+        return true;
+      },
+      /* 测试用：读某个格子的球（等级 / 颜色 / 类型 / 半径） */
+      at(r, c) {
+        const s = r >= 0 && r < rows && c >= 0 && c < cols ? grid[r][c] : null;
+        return s ? { lv: s.lv, color: s.color, type: s.type, r: sphereR(s.lv),
+                     oy: Math.round(s.oy * 10) / 10, vy: Math.round(s.vy),
+                     ox: Math.round(s.ox * 10) / 10, vx: Math.round(s.vx) } : null;
+      },
+      /* 当前这一块的形状与特殊球分布（测试用：B=炸药球 A=弹药球 .=普通球） */
+      spawnPeek() {
+        return cur ? cur.types.map(row => row.map(t => (t === 'bomb' ? 'B' : t === 'ammo' ? 'A' : '.')).join('')) : [];
+      },
+      /* 测试用：只跑一次合成扫描（不推进方块下落） */
+      mergeOnce() { return mergePass(); },
+      shake(a) { shakeAmt = Math.max(shakeAmt, a); },
+      requestSpecial(t) { forceSpecial = t || null; },
+      setPos(x, y) { boardRect.left = x; boardRect.top = y; },
+      setGrid(c, r, px) {
+        const dCols = c !== cols, dRows = r !== rows;
+        const oldRows = rows;
+        cols = c; rows = r; cell = px;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const w = cols * cell, h = rows * cell;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        dropMs = Math.max(130, Math.min(560, Math.round(6800 / rows)));
+        gridCv = null;
+
+        if (dCols) { reset(); return; }
+        if (dRows) {                        // 只是高度变了：保留局面，顶部补/删空行
+          if (r > oldRows) for (let i = 0; i < r - oldRows; i++) grid.unshift(Array(cols).fill(null));
+          else grid.splice(0, oldRows - r);
+          if (cur) {
+            cur.y = Math.max(0, Math.min(cur.y, rows - cur.shape.length));
+            if (!fits(cur.shape, cur.x, cur.y)) spawn();
+          }
+          overWait = 0;
+        }
+        draw();
+      }
+    };
+  }
+
+  function rotateMatrix(m) {
+    const hh = m.length, ww = m[0].length;
+    const out = Array.from({ length: ww }, () => Array(hh).fill(0));
+    for (let r = 0; r < hh; r++) for (let c = 0; c < ww; c++) out[c][hh - 1 - r] = m[r][c];
+    return out;
+  }
+
+  /* ================= 左侧：火柴人 + 弹弓 ================= */
+  let archerRect = { left: 0, top: 0 };
+
+  function createArcher(canvas) {
+    const ctx = canvas.getContext('2d');
+    let w = 0, h = 0, dpr = 1, gridCv = null, gridVer = -1;
+    let shoulder = { x: 0, y: 0 }, groundY = 0;
+
+    function buildGrid() {
+      gridCv = document.createElement('canvas');
+      gridCv.width = Math.round(w * dpr);
+      gridCv.height = Math.round(h * dpr);
+      const g = gridCv.getContext('2d');
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.globalAlpha = .8;
+      g.fillStyle = palette.hair;
+      for (let y = 0; y <= h; y += 18) {
+        for (let x = 0; x <= w; x += 18) g.fillRect(x - .5, y - .5, 1.2, 1.2);
+      }
+      gridVer = paletteVer;
+    }
+
+    function resize(nw, nh) {
+      w = nw; h = nh;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      groundY = h - 26;
+      shoulder = { x: Math.round(w * 0.46), y: groundY - 62 };
+      gridCv = null;
+    }
+
+    function line(x1, y1, x2, y2, lw) {
+      ctx.lineWidth = lw || 2;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    function draw(t) {
+      ctx.clearRect(0, 0, w, h);
+      if (!gridCv || gridVer !== paletteVer) buildGrid();
+      ctx.drawImage(gridCv, 0, 0, w, h);
+
+      const ink = palette.ink;
+      const bob = reduceMotion ? 0 : Math.sin(t / 820) * .9;
+      const sx = shoulder.x, sy = shoulder.y + bob;
+      const hipY = sy + 30, ground = groundY;
+      const dir = { x: Math.cos(aimAngle), y: -Math.sin(aimAngle) };
+      const perp = { x: -dir.y, y: dir.x };
+
+      // 地面 + 排线
+      ctx.strokeStyle = ink;
+      ctx.globalAlpha = .55;
+      line(10, ground, w - 10, ground, 1.6);
+      ctx.globalAlpha = .22;
+      for (let x = 14; x < w - 12; x += 13) line(x, ground + 2, x - 5, ground + 8, 1);
+      ctx.globalAlpha = 1;
+
+      // 影子
+      ctx.globalAlpha = .12;
+      ctx.fillStyle = ink;
+      ctx.beginPath();
+      ctx.ellipse(sx + 2, ground + 1, 22, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.strokeStyle = ink;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.globalAlpha = .92;
+
+      // 腿
+      line(sx - 1, hipY, sx - 8, hipY + 17, 2);
+      line(sx - 8, hipY + 17, sx - 13, ground - 3, 2);
+      line(sx + 1, hipY, sx + 8, hipY + 15, 2);
+      line(sx + 8, hipY + 15, sx + 12, ground - 3, 2);
+
+      // 身体
+      line(sx, hipY, sx, sy + 2, 2.2);
+
+      // 头
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(sx + 1, sy - 11, 7.5, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = .5;
+      line(sx + 4, sy - 17, sx + 8, sy - 21, 1.6);       // 呆毛
+      ctx.globalAlpha = .92;
+
+      // 持弓手 / 后拉手
+      const hand = { x: sx + dir.x * 20, y: sy + dir.y * 20 };
+      const forkC = { x: hand.x + dir.x * 7, y: hand.y + dir.y * 7 };
+      const tip1 = { x: forkC.x + dir.x * 9 + perp.x * 5.5, y: forkC.y + dir.y * 9 + perp.y * 5.5 };
+      const tip2 = { x: forkC.x + dir.x * 9 - perp.x * 5.5, y: forkC.y + dir.y * 9 - perp.y * 5.5 };
+      const pull = (7 + (power - .72) * 17) * (1 - recoil);
+      const pouch = { x: forkC.x - dir.x * pull, y: forkC.y - dir.y * pull };
+
+      // 后手（拉皮筋）
+      ctx.lineWidth = 2;
+      line(sx, sy + 4, pouch.x, pouch.y, 1.9);
+
+      // 弹弓叉
+      ctx.lineWidth = 2.4;
+      line(forkC.x, forkC.y, tip1.x, tip1.y, 2.4);
+      line(forkC.x, forkC.y, tip2.x, tip2.y, 2.4);
+      line(hand.x, hand.y, forkC.x, forkC.y, 2.4);
+
+      // 皮筋
+      ctx.strokeStyle = palette.red || ink;
+      ctx.globalAlpha = .75;
+      line(tip1.x, tip1.y, pouch.x, pouch.y, 1.3);
+      line(tip2.x, tip2.y, pouch.x, pouch.y, 1.3);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = ink;
+
+      // 前手 + 石头
+      line(sx, sy + 4, hand.x, hand.y, 1.9);
+      if (recoil < .35) {
+        ctx.fillStyle = ink;
+        ctx.beginPath(); ctx.arc(pouch.x, pouch.y, 3.1, 0, Math.PI * 2); ctx.fill();
+      }
+
+      ctx.globalAlpha = 1;
+      ctx.lineCap = 'butt';
+    }
+
+    return {
+      resize, draw,
+      /* 发射点（视口坐标）：随瞄准角一起转 */
+      origin() {
+        const len = 27;
+        return {
+          x: archerRect.left + shoulder.x + Math.cos(aimAngle) * len,
+          y: archerRect.top  + shoulder.y - Math.sin(aimAngle) * len
+        };
+      },
+      setPos(x, y) { archerRect.left = x; archerRect.top = y; },
+      get width() { return w; }
+    };
+  }
+
+  /* ================= 弹丸 / 粒子 / 浮字 ================= */
+  const shotCtx = shotC.getContext('2d');
+  let shotW = 0, shotH = 0, shotDpr = 1;
+  const shots = [], parts = [], pops = [];
+  const waves = [];              // 爆炸冲击波（画在弹道层）
+  let booms = [];                // 待引爆队列（连锁爆炸有极短延迟）
+  let cooldown = 0;
+
+  function sizeShots() {
+    shotW = window.innerWidth;
+    shotH = window.innerHeight;
+    shotDpr = Math.min(window.devicePixelRatio || 1, 2);
+    shotC.style.width = shotW + 'px';
+    shotC.style.height = shotH + 'px';
+    shotC.width = Math.round(shotW * shotDpr);
+    shotC.height = Math.round(shotH * shotDpr);
+    shotCtx.setTransform(shotDpr, 0, 0, shotDpr, 0, 0);
+  }
+
+  function fire(origin) {
+    if (paused || cooldown > 0) return;
+    cooldown = .36;
+    recoil = 1;
+    // 发射时在弹兜处扬起一小团铅笔灰，点击即有即时反馈
+    const pn = reduceMotion ? 2 : 5;
+    for (let i = 0; i < pn; i++) {
+      const a = rand(0, Math.PI * 2), sp = rand(30, 110);
+      parts.push({
+        x: origin.x, y: origin.y,
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 45,
+        r: rand(.9, 1.9), life: 0, max: rand(.22, .4),
+        color: palette.ink || '#2c2c2c'
+      });
+    }
+    const v = launchV;
+    for (const a of fanAngles()) {          // 弹药球攒的连发：一次同时打出多颗
+      shots.push({
+        x: origin.x, y: origin.y,
+        vx: Math.cos(a) * v,
+        vy: -Math.sin(a) * v,
+        trail: []
+      });
+    }
+    while (shots.length > 24) shots.shift();
+  }
+
+  let boardBox = { l: 0, t: 0, r: 0, b: 0 };
+
+  function hitTest(x, y, targets) {
+    for (let i = 0; i < targets.length; i++) {
+      const tg = targets[i];
+      const dx = x - tg.x, dy = y - tg.y, rr = tg.r + SHOT_R;
+      if (dx * dx + dy * dy <= rr * rr) return tg;
+    }
+    return null;
+  }
+
+  function stepShots(dt, targets) {
+    cooldown = Math.max(0, cooldown - dt);
+    for (let i = shots.length - 1; i >= 0; i--) {
+      const s = shots[i];
+      let dead = false;
+      const sub = 4, hstep = dt / sub;
+      for (let k = 0; k < sub && !dead; k++) {
+        s.vy += G_SHOT * hstep;
+        s.x += s.vx * hstep;
+        s.y += s.vy * hstep;
+        if (s.x > boardBox.l && s.x < boardBox.r && s.y > boardBox.t && s.y < boardBox.b) {
+          const tg = hitTest(s.x, s.y, targets);
+          if (tg) { onHit(tg, s.x, s.y); dead = true; }
+        }
+      }
+      s.trail.push({ x: s.x, y: s.y });
+      if (s.trail.length > 9) s.trail.shift();
+      if (dead || s.x < -60 || s.x > shotW + 60 || s.y > shotH + 60) shots.splice(i, 1);
+    }
+  }
+
+  const BLAST_R = 1;                   // 爆炸半径（格）：只波及紧挨着的 8 格，碰到炸药球再连锁
+
+  function onHit(tg, x, y) {
+    const s = tg.fall ? board.hitFalling(tg.row, tg.col) : board.damage(tg.row, tg.col);
+    if (!s) return;
+    const color = palette[s.color] || palette.ink;
+    const gain = s.lv || 1;             // 几级就得几分
+    bumpScore(gain);
+
+    if (s.type === 'bomb') {            // 炸药球：直接引爆，波及周围并连锁
+      burst(x, y, palette.red || color, '+' + gain);
+      addBoom(tg.row, tg.col, 0);
+      return;
+    }
+    burst(x, y, color, '+' + gain);
+    if (s.type === 'ammo') {            // 弹药球：同时发射的弹丸 +1（扇形多一发）
+      ammoClock = 0;                    // 拾取后 10 秒倒计时重新计满
+      if (bullets < MAX_BULLETS) {
+        addBullet(1);
+        pops.push({ x, y, life: 0, max: 1, text: '+1 发', kind: 'ammo' });
+      } else {
+        pops.push({ x, y, life: 0, max: 1, text: '火力已满', kind: 'ammo' });
+      }
+    }
+  }
+
+  function addBoom(r, c, delay) { booms.push({ r, c, t: delay || 0 }); }
+
+  function stepBooms(dt) {
+    for (let i = booms.length - 1; i >= 0; i--) {
+      const b = booms[i];
+      b.t -= dt;
+      if (b.t > 0) continue;
+      booms.splice(i, 1);
+      detonate(b.r, b.c);
+    }
+    for (let i = waves.length - 1; i >= 0; i--) {
+      waves[i].life += dt;
+      if (waves[i].life >= waves[i].dur) waves.splice(i, 1);
+    }
+  }
+
+  function detonate(r, c) {
+    const removed = board.blast(board.cellsInRadius(r, c, BLAST_R));
+    const cs = board.cellSize();
+    let cx = 0, cy = 0;
+    removed.forEach(s => { cx += s.x; cy += s.y; });
+    if (removed.length) { cx /= removed.length; cy /= removed.length; }
+    else { cx = boardBox.l + (c + .5) * cs; cy = boardBox.t + (r + .5) * cs; }
+
+    waves.push({ x: cx, y: cy, life: 0, dur: .5, r: cs * (BLAST_R + .8) });
+    if (!removed.length) return;
+
+    const gain = removed.reduce((n, s) => n + (s.lv || 1), 0);   // 波及的球按各自等级计分
+    bumpScore(gain);
+    removed.forEach(s => burst(s.x, s.y, palette[s.color] || palette.ink));
+    pops.push({ x: cx, y: cy, life: 0, max: 1.1, text: '+' + gain, kind: 'boom' });
+    board.shake(reduceMotion ? 0 : 3.4);
+    // 连锁：被波及的炸药球接着炸（略作延迟，看得出连爆的层次）
+    removed.forEach(s => { if (s.type === 'bomb') addBoom(s.r, s.c, .1); });
+  }
+
+  function burst(x, y, color, text) {
+    const n = reduceMotion ? 3 : 9;
+    for (let i = 0; i < n; i++) {
+      const a = rand(0, Math.PI * 2), sp = rand(70, 270);
+      parts.push({
+        x, y,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp - 70,
+        r: rand(1.2, 2.6),
+        life: 0, max: rand(.38, .62), color
+      });
+    }
+    pops.push({ x, y, life: 0, max: .85, text });
+  }
+
+  function stepParticles(dt) {
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i];
+      p.life += dt;
+      if (p.life >= p.max) { parts.splice(i, 1); continue; }
+      p.vy += 1200 * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+    }
+    for (let i = pops.length - 1; i >= 0; i--) {
+      pops[i].life += dt;
+      if (pops[i].life >= pops[i].max) pops.splice(i, 1);
+    }
+  }
+
+  /* 抛物线辅助线：与真实弹道同一套参数，逐点模拟 */
+  let guide = [];
+  function buildGuide(targets, ang) {
+    guide = [];
+    const o = archer.origin();
+    const a = ang === undefined ? aimAngle : ang;
+    let x = o.x, y = o.y;
+    const v = launchV;
+    let vx = Math.cos(a) * v, vy = -Math.sin(a) * v;
+    const h = 1 / 60;
+    let hit = null;
+    for (let i = 0; i < 190; i++) {
+      vy += G_SHOT * h;
+      x += vx * h;
+      y += vy * h;
+      if (i % 2 === 0) guide.push({ x, y });
+      if (x > boardBox.l && x < boardBox.r && y > boardBox.t && y < boardBox.b) {
+        hit = hitTest(x, y, targets);
+        if (hit) break;
+      }
+      if (x > shotW + 40 || y > shotH + 40) break;
+    }
+    return hit;
+  }
+
+  function drawGuide(hitPoint, scale) {
+    if (!guide.length) return;
+    const mul = scale === undefined ? 1 : scale;
+    shotCtx.save();
+    shotCtx.strokeStyle = palette.ink;
+    shotCtx.fillStyle = palette.ink;
+    const n = guide.length;
+    for (let i = 0; i < n; i++) {
+      const p = guide[i];
+      const k = i / n;
+      shotCtx.globalAlpha = .72 * (1 - k * .45) * mul;
+      shotCtx.beginPath();
+      shotCtx.arc(p.x, p.y, 2.3 - k * 1, 0, Math.PI * 2);
+      shotCtx.fill();
+    }
+    if (hitPoint) {
+      shotCtx.globalAlpha = .7 * mul;
+      shotCtx.strokeStyle = palette.red || palette.ink;
+      shotCtx.lineWidth = 1.4;
+      shotCtx.setLineDash([3, 3]);
+      shotCtx.beginPath();
+      shotCtx.arc(hitPoint.x, hitPoint.y, 11, 0, Math.PI * 2);
+      shotCtx.stroke();
+      shotCtx.setLineDash([]);
+    }
+    shotCtx.restore();
+  }
+
+  function drawShots(t, targets) {
+    shotCtx.clearRect(0, 0, shotW, shotH);
+
+    const fresh = (performance.now() - aimFresh) < 2400;
+    const showGuide = !paused && (overArcher || fresh);
+    if (showGuide) {
+      shotCtx.globalAlpha = 1;
+      const angs = fanAngles();
+      const many = angs.length > 1;
+      for (const a of angs) {                  // 连发时每条弹道都画，散开多少一眼可见
+        const hit = buildGuide(targets, a);
+        drawGuide(hit, many ? .5 : 1);
+      }
+      // 右侧棋盘上的准星：指针停在哪，弧线就正好落在哪
+      if (aimInField) {
+        shotCtx.save();
+        shotCtx.strokeStyle = palette.ink;
+        shotCtx.globalAlpha = .55;
+        shotCtx.lineWidth = 1.2;
+        shotCtx.setLineDash([4, 3]);
+        shotCtx.beginPath();
+        shotCtx.arc(aimX, aimY, 8, 0, Math.PI * 2);
+        shotCtx.stroke();
+        shotCtx.setLineDash([]);
+        shotCtx.beginPath();
+        shotCtx.moveTo(aimX - 13, aimY); shotCtx.lineTo(aimX - 4, aimY);
+        shotCtx.moveTo(aimX + 4, aimY);  shotCtx.lineTo(aimX + 13, aimY);
+        shotCtx.moveTo(aimX, aimY - 13); shotCtx.lineTo(aimX, aimY - 4);
+        shotCtx.moveTo(aimX, aimY + 4);  shotCtx.lineTo(aimX, aimY + 13);
+        shotCtx.stroke();
+        shotCtx.restore();
+      }
+    }
+
+    // 弹丸 + 尾迹
+    for (const s of shots) {
+      const ink = palette.ink;
+      for (let i = 0; i < s.trail.length; i++) {
+        const p = s.trail[i], k = i / s.trail.length;
+        shotCtx.globalAlpha = .3 * k;
+        shotCtx.fillStyle = ink;
+        shotCtx.beginPath(); shotCtx.arc(p.x, p.y, 2.6 * k, 0, Math.PI * 2); shotCtx.fill();
+      }
+      shotCtx.globalAlpha = .18;
+      shotCtx.fillStyle = ink;
+      shotCtx.beginPath(); shotCtx.arc(s.x, s.y, 6, 0, Math.PI * 2); shotCtx.fill();
+      shotCtx.globalAlpha = 1;
+      shotCtx.beginPath(); shotCtx.arc(s.x, s.y, SHOT_R, 0, Math.PI * 2); shotCtx.fill();
+      shotCtx.globalAlpha = .5;
+      shotCtx.strokeStyle = ink; shotCtx.lineWidth = 1;
+      shotCtx.beginPath(); shotCtx.arc(s.x + .8, s.y + .8, SHOT_R + 1, 0, Math.PI * 2); shotCtx.stroke();
+      shotCtx.globalAlpha = 1;
+    }
+
+    // 爆炸冲击波：手绘虚线圆环快速扩散
+    for (const wv of waves) {
+      const k = wv.life / wv.dur;
+      shotCtx.globalAlpha = (1 - k) * .75;
+      shotCtx.strokeStyle = palette.red || palette.ink;
+      shotCtx.lineWidth = 2.6 * (1 - k) + .6;
+      shotCtx.setLineDash([7, 6]);
+      shotCtx.beginPath();
+      shotCtx.arc(wv.x, wv.y, wv.r * (.2 + k * .95), 0, Math.PI * 2);
+      shotCtx.stroke();
+      shotCtx.setLineDash([]);
+      shotCtx.globalAlpha = (1 - k) * .16;
+      shotCtx.fillStyle = palette.yellow || palette.red;
+      shotCtx.beginPath();
+      shotCtx.arc(wv.x, wv.y, wv.r * (.2 + k * .8), 0, Math.PI * 2);
+      shotCtx.fill();
+    }
+
+    // 碎屑
+    for (const p of parts) {
+      const k = 1 - p.life / p.max;
+      shotCtx.globalAlpha = k;
+      shotCtx.fillStyle = p.color;
+      shotCtx.beginPath(); shotCtx.arc(p.x, p.y, p.r * k, 0, Math.PI * 2); shotCtx.fill();
+    }
+
+    // 浮字：+1 / +N / +1 弹 / 没弹药
+    for (const p of pops) {
+      const k = 1 - p.life / p.max;
+      const kind = p.kind || 'score';
+      shotCtx.globalAlpha = Math.min(1, k * 1.6);
+      shotCtx.fillStyle = kind === 'ammo' ? (palette.blue || palette.ink)
+                        : kind === 'boom' ? (palette.red || palette.ink)
+                        : (palette.red || palette.ink);
+      shotCtx.font = kind === 'boom' ? 'italic 700 22px Georgia, "Songti SC", serif'
+                                     : 'italic 700 17px Georgia, "Songti SC", serif';
+      shotCtx.textAlign = 'center';
+      shotCtx.fillText(p.text || '+1', p.x, p.y - 16 - (1 - k) * 26);
+    }
+    shotCtx.globalAlpha = 1;
+    shotCtx.textAlign = 'start';
+  }
+
+  /* ================= 布局 ================= */
+  const board  = createBoard(rightC);
+  const archer = createArcher(leftC);
+  let aimSet = false;
+
+  const PAD_H = 40;                 // 右上角方向控制条占用的高度（棋盘整体下移这么多）
+
+  function hideAll() {
+    layer.style.display = 'none';
+    shotC.classList.remove('on');
+    if (hud) hud.classList.remove('on');
+    if (pad) pad.classList.remove('on');
+    visible = false;
+    sideZone = null;
+  }
+
+  function layout() {
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const contentW = Math.min(1080, vw - 48);
+    const gap = (vw - contentW) / 2;
+    const availW = gap - 12;
+    const headerEl = document.querySelector('.topbar');
+    const topOffset = headerEl ? Math.round(headerEl.getBoundingClientRect().height) : 76;
+    const padTop = topOffset;                 // 控制条放右上角：紧贴顶栏下沿
+    const boardTop = topOffset + PAD_H;       // 棋盘整体下移，给控制条腾出位置
+    const availH = vh - boardTop - 6;
+
+    if (availW < 84) { hideAll(); return; }
+
+    const cols = clamp(Math.round(availW / 26), MIN_COLS, MAX_COLS);
+    const cell = Math.floor(availW / cols);
+    if (cell < 14) { hideAll(); return; }   // 留白太窄（<~1330px）时整体隐藏，保证观感
+    const rows = Math.max(14, Math.floor(availH / cell));
+    const w = cell * cols;
+
+    layer.style.display = 'block';
+    shotC.classList.add('on');
+    if (hud) hud.classList.add('on');
+    if (pad) pad.classList.add('on');
+    visible = true;
+    sideZone = { l1: gap, r0: vw - gap, top: topOffset };   // 正文两侧的整片留白都算「空白处」
+
+    const leftX  = Math.max(4, Math.round((gap - w) / 2));
+    const rightX = Math.round(vw - gap + (gap - w) / 2);
+
+    leftC.style.top = boardTop + 'px';
+    rightC.style.top = boardTop + 'px';
+    leftC.style.left = leftX + 'px';
+    rightC.style.left = rightX + 'px';
+
+    archer.resize(w, availH);
+    archer.setPos(leftX, boardTop);
+    board.setGrid(cols, rows, cell);
+    board.setPos(rightX, boardTop);
+    boardBox = { l: rightX, t: boardTop, r: rightX + w, b: boardTop + rows * cell };
+
+    if (pad) {                         // 控制条放右上角：按自身宽度排布，右边缘对齐棋盘右边框
+      const pw = pad.offsetWidth || 96;
+      pad.style.top = padTop + 'px';
+      pad.style.left = Math.max(4, rightX + w - pw) + 'px';
+    }
+
+    sizeShots();
+
+    if (!aimSet) {                     // 默认朝右上：解一条正好落向棋盘中部的弧线
+      const o = archer.origin();
+      const tx = rightX + w * 0.5, ty = boardTop + rows * cell * 0.45;
+      const sol = solveLaunch(tx - o.x, o.y - ty);
+      aimAngle = clamp(sol.ang, AIM_MIN * DEG, AIM_MAX * DEG);
+      launchV = sol.v;
+      power = clamp(sol.v / V0, .55, 1.45);
+      aimX = tx; aimY = ty;
+      aimInField = true;
+    }
+  }
+
+  /* ================= 交互 ================= */
+  // 弹道反解：给定指针位置，解出恰好经过该点的抛物线（低弧解）。
+  // 这样鼠标指到右侧任意位置，辅助线都能盖到那里，指哪打哪。
+  function solveLaunch(dx, dyUp) {
+    // 经过该点所需的最小初速 v² = g·(h + √(dx²+h²))，再留 15% 余量让弧线自然一些
+    const reach = dyUp + Math.hypot(dx, dyUp);
+    let v = reach > 1 ? Math.sqrt(G_SHOT * reach) * 1.15 + 60 : V0;
+    v = clamp(v, 700, 2600);
+    const v2 = v * v;
+    const root = v2 * v2 - G_SHOT * (G_SHOT * dx * dx + 2 * dyUp * v2);
+    const ang = root >= 0
+      ? Math.atan((v2 - Math.sqrt(root)) / (G_SHOT * dx))   // 低弧解：弧线平、看得清
+      : Math.atan2(dyUp, dx);                               // 理论兜底：直线方向
+    return { v, ang };
+  }
+
+  function aimFrom(x, y) {
+    const o = archer.origin();
+    const dx = x - o.x, dyUp = o.y - y;        // dyUp：指针在弹弓上方多少（向上为正）
+    if (dx < 14) return false;                 // 指针在弹弓左侧：保持上一次方向
+    const sol = solveLaunch(dx, dyUp);
+    aimAngle = clamp(sol.ang, AIM_MIN * DEG, AIM_MAX * DEG);
+    launchV = sol.v;
+    power = clamp(sol.v / V0, .55, 1.45);
+    aimX = x; aimY = y;
+    aimInField = !!(sideZone && x > sideZone.r0 && y > sideZone.top);
+    aimFresh = performance.now();
+    aimSet = true;
+    return true;
+  }
+
+  /* 同时发射的多发弹丸：以瞄准线为中心左右扇形散开（弹药球每颗 +1 发） */
+  function fanAngles() {
+    const n = bullets, gap = 2.6 * DEG, out = [];
+    for (let i = 0; i < n; i++) out.push(aimAngle + (i - (n - 1) / 2) * gap);
+    return out;
+  }
+
+  window.addEventListener('pointermove', e => {
+    if (!visible) return;
+    overArcher = e.clientX <= archerRect.left + archer.width && e.clientY >= archerRect.top;
+    aimFrom(e.clientX, e.clientY);
+  });
+
+  leftC.addEventListener('pointerenter', () => { overArcher = true; });
+  leftC.addEventListener('pointerleave', () => { overArcher = false; });
+
+  // 左键点击屏幕两侧空白处即发射，点击点同时决定这一发的朝向与力度
+  document.addEventListener('pointerdown', e => {
+    if (!visible || !sideZone) return;
+    if (e.button !== 0) return;                                       // 只响应鼠标左键 / 单指触摸
+    if (e.clientY < sideZone.top) return;                             // 顶栏留给导航
+    if (e.clientX > sideZone.l1 && e.clientX < sideZone.r0) return;   // 正文列内不触发
+    const onUI = e.target && e.target.closest &&
+                 e.target.closest('a, button, input, textarea, select, .game-hud, .to-top, .modal');
+    if (onUI) return;                                                 // 不抢占 HUD、按钮、链接
+    aimFrom(e.clientX, e.clientY);
+    e.preventDefault();
+    fire(archer.origin());
+  });
+
+  if (pauseBtn) pauseBtn.addEventListener('click', () => { paused = !paused; syncPauseUI(); });
+  if (resetBtn) resetBtn.addEventListener('click', () => { startNewRound(true); });
+
+  /* 堆满顶部自动重开时，分数与弹道一起清零，并记录这一局的分数 */
+  board.setTopOut(() => {
+    if (location.search.indexOf('bttest') > -1) window.__topOutN = (window.__topOutN || 0) + 1;
+    startNewRound(false);
+  });
+
+  /* ---- 方块控制：左右移动 + 旋转（控制条按钮 / 键盘） ---- */
+  function bindHold(btn, act) {
+    if (!btn) return;
+    let timer = null, gap = null;
+    const stop = () => { clearTimeout(timer); clearInterval(gap); timer = null; gap = null; };
+    btn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      act();
+      timer = setTimeout(() => { gap = setInterval(act, 110); }, 280);   // 按住连发
+    });
+    ['pointerup', 'pointerleave', 'pointercancel', 'blur'].forEach(ev =>
+      btn.addEventListener(ev, stop));
+    btn.addEventListener('click', e => e.preventDefault());
+  }
+  bindHold(padLeft,  () => { if (visible && !paused) board.moveBy(-1); });
+  bindHold(padRight, () => { if (visible && !paused) board.moveBy(1); });
+  bindHold(padRot,   () => { if (visible && !paused) board.rotate(); });
+  /* 快速下降：直落到底，按住也会连发，但两次之间至少隔 160ms */
+  let lastDrop = 0;
+  bindHold(padDown,  () => {
+    if (!visible || paused) return;
+    const now = performance.now();
+    if (now - lastDrop < 160) return;
+    lastDrop = now;
+    board.drop();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (!visible || e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    if (paused) return;
+    let hit = false;
+    if (e.key === 'ArrowLeft'  || e.key === 'a' || e.key === 'A') hit = board.moveBy(-1);
+    else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') hit = board.moveBy(1);
+    else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') hit = board.rotate();
+    else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+      const now = performance.now();
+      if (now - lastDrop >= 160) { lastDrop = now; board.drop(); }
+      hit = true;                       // 已处理就吞掉按键，避免页面跟着滚动
+    }
+    if (hit) e.preventDefault();
+  });
+
+  /* ================= 主循环 ================= */
+  let last = 0;
+  document.addEventListener('visibilitychange', () => { last = 0; });
+
+  function frame(t) {
+    requestAnimationFrame(frame);
+    if (!last) last = t;
+    let dt = (t - last) / 1000;
+    last = t;
+    dt = Math.min(dt, .05);
+    if (!visible || document.hidden) return;
+
+    const targets = board.targets();
+    if (!paused) {
+      board.tick(dt);
+      stepShots(dt, targets);
+      stepParticles(dt);
+      stepBooms(dt);
+      stepBulletDecay(dt);
+      recoil = Math.max(0, recoil - dt * 3.4);
+    }
+    board.draw();
+    archer.draw(t);
+    drawShots(t, targets);
+  }
+
+  let rz = 0;
+  window.addEventListener('resize', () => {
+    cancelAnimationFrame(rz);
+    rz = requestAnimationFrame(layout);
+  });
+
+  /* 仅供自动化测试：?bttest=1 时暴露手动步进器（无头浏览器虚拟时间不推进 rAF） */
+  if (location.search.indexOf('bttest') > -1) {
+    window.__bt = {
+      step(n, dt) {
+        dt = dt || 1 / 60;
+        for (let i = 0; i < n; i++) {
+          const targets = board.targets();
+          board.tick(dt);
+          stepShots(dt, targets);
+          stepParticles(dt);
+          stepBooms(dt);
+          stepBulletDecay(dt);
+          recoil = Math.max(0, recoil - dt * 3.4);
+        }
+      },
+      fire() { fire(archer.origin()); },
+      aim(deg, pw) {
+        aimAngle = deg * DEG;
+        launchV = pw ? V0 * pw : V0 * 1.28;
+        power = launchV / V0;
+        aimSet = true; aimFresh = performance.now();
+      },
+      boom(r, c) { addBoom(r, c, 0); },
+      targets() { return board.targets(); },
+      peek() { return board.spawnPeek(); },
+      forceType(t) { board.requestSpecial(t); },
+      put(r, c, color, lv, type) { return board.put(r, c, color, lv, type); },
+      at(r, c) { return board.at(r, c); },
+      merge() { return board.mergeOnce(); },
+      move(dx) { return board.moveBy(dx); },
+      rotate() { return board.rotate(); },
+      drop() { return board.drop(); },
+      forceOver() { board.forceOver(); },
+      cur() { return board.curInfo(); },
+      rounds() { return rounds.slice(); },
+      hist() { return histEl ? histEl.textContent : ''; },
+      specials() { return board.countSpecial(); },
+      rad(lv) { return board.sphereR(lv || 1); },
+      cell() { return board.cellSize(); },
+      dims() { return board.dims(); },
+      map() { return board.map(); },
+      hit(r, c) {
+        const t = board.targets().find(x => x.row === r && x.col === c);
+        if (t) onHit(t, t.x, t.y);
+        return !!t;
+      },
+      state() {
+        const ts = board.targets();
+        return { score, paused, bullets, fan: fanAngles().length, shots: shots.length,
+                 specials: board.countSpecial(),
+                 falling: ts.filter(t => t.fall).length,
+                 ammoClock: Math.round(ammoClock),
+                 aim: Math.round(aimAngle / DEG), power: Math.round(power * 100) / 100,
+                 balls: ts.length,
+                 maxLv: ts.length ? Math.max(...ts.map(t => t.lv || 1)) : 0,
+                 levelSum: ts.reduce((n, t) => n + (t.lv || 1), 0),
+                 bombs: ts.filter(t => t.type === 'bomb').length,
+                 ammoBalls: ts.filter(t => t.type === 'ammo').length,
+                 top: ts.length ? Math.round(Math.min(...ts.map(t => t.y))) : -1,
+                 bottom: ts.length ? Math.round(Math.max(...ts.map(t => t.y))) : -1 };
+      }
+    };
+  }
+
+  syncBullets();
+  syncPauseUI();
+  renderHist();
+  layout();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
