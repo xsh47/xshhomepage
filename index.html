@@ -47,12 +47,12 @@
     </button>
   </div>
   <div class="hud-keys" aria-label="游戏操作说明">
-    <span class="kp"><span class="key">←→</span><span class="act">移动</span></span>
-    <span class="kp"><span class="key">↑</span><span class="act">旋转</span></span>
-    <span class="kp"><span class="key">↓</span><span class="act">快降</span></span>
-    <span class="kp"><span class="key">点击两侧</span><span class="act">发射</span></span>
+    <span class="kp"><b>← →</b>移动</span>
+    <span class="kp"><b>↑</b>旋转</span>
+    <span class="kp"><b>↓</b>快降</span>
+    <span class="kp"><b>点击两侧</b>发射</span>
   </div>
-  <p class="hud-rule">同级同色相撞合成 · 炸药球连爆<br>弹药球 +1 弹道（10 秒不开火 -1）</p>
+  <p class="hud-rule">同级同色相撞合成·炸药球连爆<br>弹药球+1 弹道·10秒不开火-1</p>
 </div>
 
 <!-- 右侧留白底部的方块控制条：左移 / 旋转 / 右移 -->
@@ -2166,6 +2166,7 @@
     const contentW = Math.min(1080, vw - 48);
     const gap = (vw - contentW) / 2;
     const availW = gap - 12;
+    if (hud) hud.style.width = Math.round(clamp(gap - 18, 132, 182)) + 'px';   // 面板宽度跟随左侧留白
     const headerEl = document.querySelector('.topbar');
     const topOffset = headerEl ? Math.round(headerEl.getBoundingClientRect().height) : 76;
     const padTop = topOffset;                 // 控制条放右上角：紧贴顶栏下沿

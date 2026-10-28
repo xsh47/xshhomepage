@@ -614,7 +614,7 @@ footer a:hover{ color:var(--red); }
 /* 左上角计分 / 暂停 / 重置 */
 .game-hud{
   position:fixed; left:14px; top:88px; z-index:35;
-  width:132px; padding:11px 12px 10px;
+  width:162px; padding:11px 13px 11px;   /* 宽度由 JS 按左侧留白微调（132~182） */
   display:none; transform:rotate(-.7deg);
   background-color:var(--paper-2);
   background-image:var(--grid-tex); background-size:16px 16px;
@@ -678,27 +678,21 @@ footer a:hover{ color:var(--red); }
 .hud-hist i{
   font-style:normal; font-size:10px; letter-spacing:.1em; color:var(--ink-3); opacity:.7;
 }
-/* 键位说明：键帽 + 短语，替代原先 7 行密集小字 */
+/* 键位说明：纯文字箭头 + 短语（不加框），两列自动换行 */
 .hud-keys{
-  display:flex; flex-wrap:wrap; gap:4px 8px;
-  margin-top:8px; padding-top:8px; border-top:1.5px dashed var(--hair);
-  align-items:center;
+  display:flex; flex-wrap:wrap; gap:5px 12px;
+  margin-top:9px; padding-top:9px; border-top:1.5px dashed var(--hair);
+  align-items:baseline;
 }
-.hud-keys .kp{ display:inline-flex; align-items:center; gap:4px; }
-.hud-keys .key{
-  font-family:var(--mono); font-size:9px; letter-spacing:.05em;
-  padding:1.5px 5px; line-height:1;
-  background:var(--paper); color:var(--ink-2);
-  border:1.2px solid var(--ink-2); border-radius:3px;
-  box-shadow:1px 1px 0 var(--hair);
-  white-space:nowrap;
+.hud-keys .kp{ display:inline-flex; align-items:baseline; gap:5px; white-space:nowrap; }
+.hud-keys .kp b{
+  font-family:var(--mono); font-weight:400; font-size:11.5px;
+  letter-spacing:.06em; color:var(--ink);
 }
-.hud-keys .act{
-  font-size:10.5px; letter-spacing:.03em; color:var(--ink-3); white-space:nowrap;
-}
+.hud-keys .kp{ font-size:10.5px; letter-spacing:.03em; color:var(--ink-3); }
 .hud-rule{
-  margin:7px 0 0; font-size:10px; line-height:1.65;
-  color:var(--ink-3); letter-spacing:.02em;
+  margin:8px 0 0; font-size:9px; line-height:1.75;
+  color:var(--ink-3); letter-spacing:.01em;
 }
 @media (max-width: 1329px){
   .game-hud{ display:none !important; }
