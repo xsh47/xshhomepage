@@ -264,6 +264,9 @@ main{ padding:0 0 40px; }
   max-width:330px; text-align:right; font-size:13.5px; font-style:italic;
   color:var(--ink-3); line-height:1.75; padding-bottom:6px;
 }
+/* 作品集说明下的补充提示：换行单独一句，字号略小，※ 用主题红强调 */
+.sec-note-tip{ display:block; margin-top:5px; font-size:12.5px; color:var(--ink-2); }
+.sec-note-tip em{ color:var(--red); font-style:normal; margin-right:3px; }
 
 /* ================= 关于 ================= */
 .about-grid{ display:grid; grid-template-columns:1.1fr .9fr; gap:26px; align-items:start; }
@@ -509,31 +512,7 @@ main{ padding:0 0 40px; }
 .contact h2{ font-size:clamp(21px, 3vw, 29px); line-height:1.4; margin-top:4px; }
 .contact h2 span{ color:var(--red); }
 .contact p{ margin-top:8px; font-size:13.5px; font-style:italic; color:var(--ink-3); }
-.contact .links{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
-
-/* 二维码卡片：始终垫一层纸色底（反色码很多扫码器不认），外壳随主题变化 */
-.qr-card{
-  display:flex; align-items:center; gap:10px; text-decoration:none;
-  padding:6px 12px 6px 6px;
-  background:var(--paper-2);
-  border:1.6px solid var(--ink); border-radius:2px;
-  box-shadow:var(--sh-2);
-  transform:rotate(-1deg);
-  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
-}
-.qr-card img{
-  width:72px; height:72px; display:block; flex:none;
-  background:#f5f0e8;                     /* 与二维码本身的纸底色一致，消除色块边界 */
-  border:1px solid var(--hair);
-  image-rendering:pixelated;
-}
-.qr-cap{ font-size:12.5px; line-height:1.5; color:var(--ink-3); font-style:italic; }
-.qr-cap b{ font-style:normal; font-weight:600; color:var(--ink); }
-.qr-card:hover{ transform:rotate(0deg) translateY(-1px); box-shadow:var(--sh-3); border-color:var(--red); }
-.qr-card:hover .qr-cap b{ color:var(--red); }
-@media (max-width: 720px){
-  .qr-card{ align-self:flex-start; }
-}
+.contact .links{ display:flex; gap:12px; flex-wrap:wrap; }
 
 footer{
   display:flex; align-items:center; justify-content:space-between; gap:16px;
@@ -699,9 +678,27 @@ footer a:hover{ color:var(--red); }
 .hud-hist i{
   font-style:normal; font-size:10px; letter-spacing:.1em; color:var(--ink-3); opacity:.7;
 }
-.hud-tip{
-  margin:8px 0 0; font-size:10px; line-height:1.6; color:var(--ink-3);
-  letter-spacing:.02em;
+/* 键位说明：键帽 + 短语，替代原先 7 行密集小字 */
+.hud-keys{
+  display:flex; flex-wrap:wrap; gap:4px 8px;
+  margin-top:8px; padding-top:8px; border-top:1.5px dashed var(--hair);
+  align-items:center;
+}
+.hud-keys .kp{ display:inline-flex; align-items:center; gap:4px; }
+.hud-keys .key{
+  font-family:var(--mono); font-size:9px; letter-spacing:.05em;
+  padding:1.5px 5px; line-height:1;
+  background:var(--paper); color:var(--ink-2);
+  border:1.2px solid var(--ink-2); border-radius:3px;
+  box-shadow:1px 1px 0 var(--hair);
+  white-space:nowrap;
+}
+.hud-keys .act{
+  font-size:10.5px; letter-spacing:.03em; color:var(--ink-3); white-space:nowrap;
+}
+.hud-rule{
+  margin:7px 0 0; font-size:10px; line-height:1.65;
+  color:var(--ink-3); letter-spacing:.02em;
 }
 @media (max-width: 1329px){
   .game-hud{ display:none !important; }

@@ -46,7 +46,13 @@
       </svg>
     </button>
   </div>
-  <p class="hud-tip">点击两侧空白发射 · ← → 移动方块 · ↑ 旋转 · ↓ 快速下降 · 同级同色相撞合成 · 炸药球连爆 · 弹药球 +1 弹道（10 秒不打就 -1）</p>
+  <div class="hud-keys" aria-label="游戏操作说明">
+    <span class="kp"><span class="key">←→</span><span class="act">移动</span></span>
+    <span class="kp"><span class="key">↑</span><span class="act">旋转</span></span>
+    <span class="kp"><span class="key">↓</span><span class="act">快降</span></span>
+    <span class="kp"><span class="key">点击两侧</span><span class="act">发射</span></span>
+  </div>
+  <p class="hud-rule">同级同色相撞合成 · 炸药球连爆<br>弹药球 +1 弹道（10 秒不开火 -1）</p>
 </div>
 
 <!-- 右侧留白底部的方块控制条：左移 / 旋转 / 右移 -->
@@ -300,7 +306,7 @@
     <div class="sec-head rv">
       <span class="sec-idx">(04)</span>
       <h2>个人作品集<em>portfolio</em></h2>
-      <p class="sec-note">活动、系统、数值配置与问题分析材料，点击标题在线预览，或下载原文件。</p>
+      <p class="sec-note">活动、系统、数值配置与问题分析材料，点击标题在线预览，或下载原文件。<span class="sec-note-tip"><em>※</em>在线预览的表格式和正常表有出入，推荐下载观看。</span></p>
     </div>
     <div class="folio">
       <article class="card folio-group tilt-l rv">
@@ -545,12 +551,6 @@
     </div>
     <div class="links">
       <button class="btn solid" type="button" data-copy="xsh47@foxmail.com">✉ 邮件联系</button>
-      <a class="qr-card" href="https://xsh47.github.io/xshhomepage/#portfolio"
-         target="_blank" rel="noopener" title="扫码或点击查看在线简历 · 作品集">
-        <img src="qrcode-portfolio-transparent.png" width="72" height="72"
-             alt="扫码查看在线简历与作品集" loading="lazy">
-        <span class="qr-cap">扫码看<b>作品集</b></span>
-      </a>
     </div>
   </section>
 
@@ -852,9 +852,9 @@
   const BULLET_START = 1;        // 一次同时发射的弹丸数
   const MAX_BULLETS  = 3;        // 上限：最多 3 条弹道
   const MIN_BULLETS  = 1;        // 下限：至少 1 条弹道
-  const DECAY_MS     = 10000;    // 10 秒没打到加弹道的弹药球，弹道 -1
+  const DECAY_MS     = 10000;    // 10 秒不发射，弹道 -1
   let bullets = BULLET_START;
-  let ammoClock = 0;             // 距离上次拾取弹药球过去了多少毫秒
+  let ammoClock = 0;             // 距离上一次发射过去了多少毫秒
 
   function syncBullets(pop) {
     if (!ammoEl) return;
@@ -869,10 +869,11 @@
   function addBullet(n) {
     bullets = clamp(bullets + n, MIN_BULLETS, MAX_BULLETS);
     syncBullets(true);
+    syncDecay();                   // 刚加成多条弹道时立刻显示倒计时
   }
 
-  /* 弹道衰减：每满 10 秒未击中加弹道的弹药球，弹道数 -1（不低于 1）；
-     一旦打中弹药球立刻回满 10 秒 */
+  /* 弹道衰减：每满 10 秒一次都没发射，弹道数 -1（不低于 1 条就停）；
+     任意一次发射都会把倒计时清零重计 */
   function stepBulletDecay(dt) {
     if (bullets <= MIN_BULLETS) { ammoClock = 0; syncDecay(); return; }
     ammoClock += dt * 1000;
@@ -1846,6 +1847,8 @@
     if (paused || cooldown > 0) return;
     cooldown = .36;
     recoil = 1;
+    ammoClock = 0;                        // 只要开了火，10 秒衰减倒计时就重新计满
+    syncDecay();
     // 发射时在弹兜处扬起一小团铅笔灰，点击即有即时反馈
     const pn = reduceMotion ? 2 : 5;
     for (let i = 0; i < pn; i++) {
@@ -1917,7 +1920,6 @@
     }
     burst(x, y, color, '+' + gain);
     if (s.type === 'ammo') {            // 弹药球：同时发射的弹丸 +1（扇形多一发）
-      ammoClock = 0;                    // 拾取后 10 秒倒计时重新计满
       if (bullets < MAX_BULLETS) {
         addBullet(1);
         pops.push({ x, y, life: 0, max: 1, text: '+1 发', kind: 'ammo' });
