@@ -509,7 +509,31 @@ main{ padding:0 0 40px; }
 .contact h2{ font-size:clamp(21px, 3vw, 29px); line-height:1.4; margin-top:4px; }
 .contact h2 span{ color:var(--red); }
 .contact p{ margin-top:8px; font-size:13.5px; font-style:italic; color:var(--ink-3); }
-.contact .links{ display:flex; gap:12px; flex-wrap:wrap; }
+.contact .links{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+
+/* 二维码卡片：始终垫一层纸色底（反色码很多扫码器不认），外壳随主题变化 */
+.qr-card{
+  display:flex; align-items:center; gap:10px; text-decoration:none;
+  padding:6px 12px 6px 6px;
+  background:var(--paper-2);
+  border:1.6px solid var(--ink); border-radius:2px;
+  box-shadow:var(--sh-2);
+  transform:rotate(-1deg);
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.qr-card img{
+  width:72px; height:72px; display:block; flex:none;
+  background:#f5f0e8;                     /* 与二维码本身的纸底色一致，消除色块边界 */
+  border:1px solid var(--hair);
+  image-rendering:pixelated;
+}
+.qr-cap{ font-size:12.5px; line-height:1.5; color:var(--ink-3); font-style:italic; }
+.qr-cap b{ font-style:normal; font-weight:600; color:var(--ink); }
+.qr-card:hover{ transform:rotate(0deg) translateY(-1px); box-shadow:var(--sh-3); border-color:var(--red); }
+.qr-card:hover .qr-cap b{ color:var(--red); }
+@media (max-width: 720px){
+  .qr-card{ align-self:flex-start; }
+}
 
 footer{
   display:flex; align-items:center; justify-content:space-between; gap:16px;
